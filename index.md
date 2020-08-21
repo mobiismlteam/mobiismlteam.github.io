@@ -1,3 +1,14 @@
+## 모비스 ML팀
+
+아래는 기본으로 생성된 텍스트 입니다 (상관 쓰지 않으셔도 됩니다.)
+
+To do:
+- 하이퍼링크 하는 법 숙지 / 추가
+- 이미지 추가하는 법 숙지
+- 웹사이트 작성 메뉴얼 작성
+
+이상입니다. 즐거운 하루 보내십시오!
+
 ## Welcome to GitHub Pages
 
 You can use the [editor on GitHub](https://github.com/mobiismlteam/website-test/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
