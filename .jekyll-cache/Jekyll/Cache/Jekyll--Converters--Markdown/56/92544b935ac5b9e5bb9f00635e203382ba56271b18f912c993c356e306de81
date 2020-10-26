@@ -1,0 +1,21 @@
+I"
+<!--more-->
+<style>
+  .page__header .header__brand path {
+    fill: rgba(255, 255, 255, .95);
+  }
+</style>
+
+<h1 id="mobiis-machine-learning-team">Mobiis Machine Learning Team</h1>
+<h2 id="project">Project</h2>
+<h3 id="previous">Previous</h3>
+<ul>
+  <li>ATC(2015~2020) : PAL-XFEL Linear Accelerator Control with Reinforcemnet Learning</li>
+  <li>ITER(2018~2020) : Real-time CIS with Neural Network</li>
+</ul>
+
+<h3 id="current">Current</h3>
+<ul>
+  <li>BIO(2019~) : CRISPR Efficiency Prediction with Deep Learning</li>
+</ul>
+:ET

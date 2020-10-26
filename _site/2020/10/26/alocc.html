@@ -1,0 +1,1951 @@
+<!DOCTYPE html><html lang="ko">
+  <head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>ALOCC - Mobiis ML Team - Tech blog</title>
+
+<meta name="description" content="TutorialHow to do Novelty Detection in Keras with Generative Adversarial Network | DLologyThis notebook is for test phase Novelty Detection. To Train the mod...">
+<link rel="canonical" href="http://localhost:4000/2020/10/26/alocc.html"><link rel="alternate" type="application/rss+xml" title="Mobiis ML Team - Tech blog" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://use.fontawesome.com/releases/v5.0.13/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+<a title="Mobiis Machine Learning Team - Tech blog
+" href="/">Mobiis ML Team - Tech blog</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/archive.html">아카이브</a></li><li class="navigation__item"><a href="/about.html">소개</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><div class="article__header"><header><h1>ALOCC</h1></header><span class="split-space">&nbsp;</span>
+          <a class="edit-on-github"
+            title="Github에서 확인하기"
+            href="https://github.com/mobiismlteam/mobiismlteam.github.io/tree/master/_posts/2020-10-26-alocc.md">
+            <i class="far fa-edit"></i></a></div><meta itemprop="headline" content="ALOCC"><div class="article__info clearfix"><ul class="left-col menu"><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive.html?tag=NoveltyDetection">NoveltyDetection</a>
+            </li></ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2020년 10월 26일</span>
+            </li></ul></div><meta itemprop="author" content="mobiismlteam"/><meta itemprop="datePublished" content="2020-10-26T00:00:00+09:00">
+    <meta itemprop="keywords" content="NoveltyDetection"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h1 id="tutorial">Tutorial</h1>
+<h2 id="how-to-do-novelty-detection-in-keras-with-generative-adversarial-network--dlology"><a href="https://www.dlology.com/blog/how-to-do-novelty-detection-in-keras-with-generative-adversarial-network-part-2/">How to do Novelty Detection in Keras with Generative Adversarial Network</a> | DLology</h2>
+
+<p>This notebook is for test phase Novelty Detection. To Train the model, run this first.</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python models.py
+</code></pre></div></div>
+
+<p>It is recommended to understand how the model works in general before continuing the implementation.</p>
+
+<p>→ <a href="https://www.dlology.com/blog/how-to-do-novelty-detection-in-keras-with-generative-adversarial-network/">How to do Novelty Detection in Keras with Generative Adversarial Network (Part 1)</a></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">kh_tools</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">models</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">from</span> <span class="nn">keras.utils.vis_utils</span> <span class="kn">import</span> <span class="n">plot_model</span>
+<span class="n">imp</span><span class="p">.</span><span class="nb">reload</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">keras.datasets</span> <span class="kn">import</span> <span class="n">mnist</span>
+<span class="kn">from</span> <span class="nn">keras.losses</span> <span class="kn">import</span> <span class="n">binary_crossentropy</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">mnist</span><span class="p">.</span><span class="n">load_data</span><span class="p">()</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">X_train</span> <span class="o">/</span> <span class="mi">255</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Using TensorFlow backend.
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">ALOCC_Model</span>
+<span class="bp">self</span> <span class="o">=</span> <span class="n">ALOCC_Model</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s">'mnist'</span><span class="p">,</span> <span class="n">input_height</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span><span class="n">input_width</span><span class="o">=</span><span class="mi">28</span><span class="p">)</span>
+<span class="c1">#build alocc model
+</span></code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>generator
+Model: "R"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+z (InputLayer)               (None, 28, 28, 1)         0         
+_________________________________________________________________
+g_encoder_h0_conv (Conv2D)   (None, 14, 14, 32)        832       
+_________________________________________________________________
+batch_normalization_10 (Batc (None, 14, 14, 32)        128       
+_________________________________________________________________
+leaky_re_lu_12 (LeakyReLU)   (None, 14, 14, 32)        0         
+_________________________________________________________________
+g_encoder_h1_conv (Conv2D)   (None, 7, 7, 64)          51264     
+_________________________________________________________________
+batch_normalization_11 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+leaky_re_lu_13 (LeakyReLU)   (None, 7, 7, 64)          0         
+_________________________________________________________________
+g_encoder_h2_conv (Conv2D)   (None, 4, 4, 128)         204928    
+_________________________________________________________________
+batch_normalization_12 (Batc (None, 4, 4, 128)         512       
+_________________________________________________________________
+leaky_re_lu_14 (LeakyReLU)   (None, 4, 4, 128)         0         
+_________________________________________________________________
+conv2d_5 (Conv2D)            (None, 4, 4, 16)          51216     
+_________________________________________________________________
+up_sampling2d_4 (UpSampling2 (None, 8, 8, 16)          0         
+_________________________________________________________________
+conv2d_6 (Conv2D)            (None, 8, 8, 16)          6416      
+_________________________________________________________________
+up_sampling2d_5 (UpSampling2 (None, 16, 16, 16)        0         
+_________________________________________________________________
+conv2d_7 (Conv2D)            (None, 14, 14, 32)        4640      
+_________________________________________________________________
+up_sampling2d_6 (UpSampling2 (None, 28, 28, 32)        0         
+_________________________________________________________________
+conv2d_8 (Conv2D)            (None, 28, 28, 1)         801       
+=================================================================
+Total params: 320,993
+Trainable params: 320,545
+Non-trainable params: 448
+_________________________________________________________________
+
+discriminator
+Model: "D"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+d_input (InputLayer)         (None, 28, 28, 1)         0         
+_________________________________________________________________
+d_h0_conv (Conv2D)           (None, 14, 14, 16)        416       
+_________________________________________________________________
+leaky_re_lu_8 (LeakyReLU)    (None, 14, 14, 16)        0         
+_________________________________________________________________
+d_h1_conv (Conv2D)           (None, 7, 7, 32)          12832     
+_________________________________________________________________
+batch_normalization_7 (Batch (None, 7, 7, 32)          128       
+_________________________________________________________________
+leaky_re_lu_9 (LeakyReLU)    (None, 7, 7, 32)          0         
+_________________________________________________________________
+d_h2_conv (Conv2D)           (None, 4, 4, 64)          51264     
+_________________________________________________________________
+batch_normalization_8 (Batch (None, 4, 4, 64)          256       
+_________________________________________________________________
+leaky_re_lu_10 (LeakyReLU)   (None, 4, 4, 64)          0         
+_________________________________________________________________
+d_h3_conv (Conv2D)           (None, 2, 2, 128)         204928    
+_________________________________________________________________
+batch_normalization_9 (Batch (None, 2, 2, 128)         512       
+_________________________________________________________________
+leaky_re_lu_11 (LeakyReLU)   (None, 2, 2, 128)         0         
+_________________________________________________________________
+flatten_2 (Flatten)          (None, 512)               0         
+_________________________________________________________________
+d_h3_lin (Dense)             (None, 1)                 513       
+=================================================================
+Total params: 541,250
+Trainable params: 270,401
+Non-trainable params: 270,849
+_________________________________________________________________
+
+adversarial_model
+Model: "model_2"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_2 (InputLayer)         (None, 28, 28, 1)         0         
+_________________________________________________________________
+R (Model)                    (None, 28, 28, 1)         320993    
+_________________________________________________________________
+D (Model)                    (None, 1)                 270849    
+=================================================================
+Total params: 591,842
+Trainable params: 320,545
+Non-trainable params: 271,297
+_________________________________________________________________
+</code></pre></div></div>
+
+<h2 id="training">Training</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="bp">self</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">sample_interval</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Epoch (0/5)-------------------------------------------------
+
+
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+
+
+Epoch:[0]-[0/52] --&gt; d_loss_real: 1.568, d_loss_fake: 15.802, g_loss:0.140, g_recon_loss:0.560
+Epoch:[0]-[1/52] --&gt; d_loss_real: 0.003, d_loss_fake: 0.289, g_loss:14.704, g_recon_loss:4.606
+Epoch:[0]-[2/52] --&gt; d_loss_real: 2.517, d_loss_fake: 0.004, g_loss:1.125, g_recon_loss:3.327
+Epoch:[0]-[3/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.040, g_loss:5.021, g_recon_loss:2.537
+
+
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+
+
+Epoch:[0]-[4/52] --&gt; d_loss_real: 0.000, d_loss_fake: 1.368, g_loss:10.722, g_recon_loss:1.165
+Epoch:[0]-[5/52] --&gt; d_loss_real: 0.000, d_loss_fake: 3.883, g_loss:0.332, g_recon_loss:0.501
+Epoch:[0]-[6/52] --&gt; d_loss_real: 0.005, d_loss_fake: 2.541, g_loss:2.681, g_recon_loss:1.133
+Epoch:[0]-[7/52] --&gt; d_loss_real: 4.097, d_loss_fake: 2.061, g_loss:1.831, g_recon_loss:0.559
+Epoch:[0]-[8/52] --&gt; d_loss_real: 0.246, d_loss_fake: 1.715, g_loss:3.590, g_recon_loss:0.496
+Epoch:[0]-[9/52] --&gt; d_loss_real: 3.208, d_loss_fake: 0.835, g_loss:1.735, g_recon_loss:0.363
+Epoch:[0]-[10/52] --&gt; d_loss_real: 1.503, d_loss_fake: 0.857, g_loss:1.453, g_recon_loss:0.385
+Epoch:[0]-[11/52] --&gt; d_loss_real: 1.292, d_loss_fake: 0.790, g_loss:1.403, g_recon_loss:0.438
+Epoch:[0]-[12/52] --&gt; d_loss_real: 0.958, d_loss_fake: 0.600, g_loss:1.202, g_recon_loss:0.484
+Epoch:[0]-[13/52] --&gt; d_loss_real: 0.562, d_loss_fake: 0.416, g_loss:1.478, g_recon_loss:0.567
+Epoch:[0]-[14/52] --&gt; d_loss_real: 0.396, d_loss_fake: 0.565, g_loss:1.847, g_recon_loss:0.345
+Epoch:[0]-[15/52] --&gt; d_loss_real: 1.056, d_loss_fake: 0.523, g_loss:0.148, g_recon_loss:0.480
+Epoch:[0]-[16/52] --&gt; d_loss_real: 0.061, d_loss_fake: 1.098, g_loss:3.442, g_recon_loss:0.356
+Epoch:[0]-[17/52] --&gt; d_loss_real: 3.898, d_loss_fake: 0.921, g_loss:0.794, g_recon_loss:0.328
+Epoch:[0]-[18/52] --&gt; d_loss_real: 0.732, d_loss_fake: 1.429, g_loss:1.608, g_recon_loss:0.282
+Epoch:[0]-[19/52] --&gt; d_loss_real: 1.315, d_loss_fake: 0.591, g_loss:0.848, g_recon_loss:0.305
+Epoch:[0]-[20/52] --&gt; d_loss_real: 0.672, d_loss_fake: 0.728, g_loss:0.950, g_recon_loss:0.268
+Epoch:[0]-[21/52] --&gt; d_loss_real: 0.845, d_loss_fake: 0.930, g_loss:1.257, g_recon_loss:0.362
+Epoch:[0]-[22/52] --&gt; d_loss_real: 0.944, d_loss_fake: 0.565, g_loss:0.750, g_recon_loss:0.431
+Epoch:[0]-[23/52] --&gt; d_loss_real: 0.349, d_loss_fake: 0.072, g_loss:0.113, g_recon_loss:0.469
+Epoch:[0]-[24/52] --&gt; d_loss_real: 0.009, d_loss_fake: 0.034, g_loss:0.079, g_recon_loss:0.330
+Epoch:[0]-[25/52] --&gt; d_loss_real: 0.016, d_loss_fake: 0.054, g_loss:0.072, g_recon_loss:0.241
+Epoch:[0]-[26/52] --&gt; d_loss_real: 0.039, d_loss_fake: 0.018, g_loss:0.058, g_recon_loss:0.268
+Epoch:[0]-[27/52] --&gt; d_loss_real: 0.005, d_loss_fake: 0.005, g_loss:0.051, g_recon_loss:0.242
+Epoch:[0]-[28/52] --&gt; d_loss_real: 0.013, d_loss_fake: 0.009, g_loss:0.046, g_recon_loss:0.218
+Epoch:[0]-[29/52] --&gt; d_loss_real: 0.005, d_loss_fake: 0.002, g_loss:0.040, g_recon_loss:0.193
+Epoch:[0]-[30/52] --&gt; d_loss_real: 0.004, d_loss_fake: 0.002, g_loss:0.038, g_recon_loss:0.186
+Epoch:[0]-[31/52] --&gt; d_loss_real: 0.002, d_loss_fake: 0.001, g_loss:0.034, g_recon_loss:0.163
+Epoch:[0]-[32/52] --&gt; d_loss_real: 0.002, d_loss_fake: 0.001, g_loss:0.036, g_recon_loss:0.177
+Epoch:[0]-[33/52] --&gt; d_loss_real: 0.003, d_loss_fake: 0.001, g_loss:0.033, g_recon_loss:0.160
+Epoch:[0]-[34/52] --&gt; d_loss_real: 0.001, d_loss_fake: 0.000, g_loss:0.027, g_recon_loss:0.133
+Epoch:[0]-[35/52] --&gt; d_loss_real: 0.001, d_loss_fake: 0.000, g_loss:0.027, g_recon_loss:0.132
+Epoch:[0]-[36/52] --&gt; d_loss_real: 0.001, d_loss_fake: 0.000, g_loss:0.028, g_recon_loss:0.138
+Epoch:[0]-[37/52] --&gt; d_loss_real: 0.002, d_loss_fake: 0.000, g_loss:0.023, g_recon_loss:0.115
+Epoch:[0]-[38/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.019, g_recon_loss:0.096
+Epoch:[0]-[39/52] --&gt; d_loss_real: 0.001, d_loss_fake: 0.000, g_loss:0.021, g_recon_loss:0.105
+Epoch:[0]-[40/52] --&gt; d_loss_real: 0.001, d_loss_fake: 0.000, g_loss:0.020, g_recon_loss:0.100
+Epoch:[0]-[41/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.018, g_recon_loss:0.087
+Epoch:[0]-[42/52] --&gt; d_loss_real: 0.001, d_loss_fake: 0.000, g_loss:0.017, g_recon_loss:0.087
+Epoch:[0]-[43/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.018, g_recon_loss:0.087
+Epoch:[0]-[44/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.017, g_recon_loss:0.084
+Epoch:[0]-[45/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.017, g_recon_loss:0.082
+Epoch:[0]-[46/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.017, g_recon_loss:0.083
+Epoch:[0]-[47/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.015, g_recon_loss:0.074
+Epoch:[0]-[48/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.016, g_recon_loss:0.078
+Epoch:[0]-[49/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.016, g_recon_loss:0.078
+Epoch:[0]-[50/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.014, g_recon_loss:0.069
+Epoch:[0]-[51/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.018, g_recon_loss:0.090
+Epoch (1/5)-------------------------------------------------
+Epoch:[1]-[0/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.024, g_recon_loss:0.117
+Epoch:[1]-[1/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.016, g_recon_loss:0.082
+Epoch:[1]-[2/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.015, g_recon_loss:0.073
+Epoch:[1]-[3/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.015, g_recon_loss:0.073
+Epoch:[1]-[4/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.016, g_recon_loss:0.080
+Epoch:[1]-[5/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.000, g_loss:0.029, g_recon_loss:0.127
+Epoch:[1]-[6/52] --&gt; d_loss_real: 0.000, d_loss_fake: 0.004, g_loss:1.339, g_recon_loss:1.790
+Epoch:[1]-[7/52] --&gt; d_loss_real: 1.568, d_loss_fake: 8.227, g_loss:0.794, g_recon_loss:0.825
+Epoch:[1]-[8/52] --&gt; d_loss_real: 0.275, d_loss_fake: 2.447, g_loss:1.562, g_recon_loss:0.372
+Epoch:[1]-[9/52] --&gt; d_loss_real: 1.099, d_loss_fake: 1.998, g_loss:1.119, g_recon_loss:0.339
+Epoch:[1]-[10/52] --&gt; d_loss_real: 1.060, d_loss_fake: 1.677, g_loss:1.042, g_recon_loss:0.434
+Epoch:[1]-[11/52] --&gt; d_loss_real: 1.158, d_loss_fake: 1.530, g_loss:1.140, g_recon_loss:0.437
+Epoch:[1]-[12/52] --&gt; d_loss_real: 1.099, d_loss_fake: 1.001, g_loss:1.057, g_recon_loss:0.348
+Epoch:[1]-[13/52] --&gt; d_loss_real: 1.024, d_loss_fake: 1.001, g_loss:1.008, g_recon_loss:0.305
+Epoch:[1]-[14/52] --&gt; d_loss_real: 1.029, d_loss_fake: 0.949, g_loss:1.013, g_recon_loss:0.362
+Epoch:[1]-[15/52] --&gt; d_loss_real: 0.975, d_loss_fake: 1.022, g_loss:0.967, g_recon_loss:0.292
+Epoch:[1]-[16/52] --&gt; d_loss_real: 1.007, d_loss_fake: 0.976, g_loss:0.887, g_recon_loss:0.373
+Epoch:[1]-[17/52] --&gt; d_loss_real: 1.004, d_loss_fake: 0.983, g_loss:1.300, g_recon_loss:1.357
+Epoch:[1]-[18/52] --&gt; d_loss_real: 0.853, d_loss_fake: 1.114, g_loss:1.058, g_recon_loss:0.367
+Epoch:[1]-[19/52] --&gt; d_loss_real: 0.947, d_loss_fake: 0.921, g_loss:1.021, g_recon_loss:0.264
+Epoch:[1]-[20/52] --&gt; d_loss_real: 0.949, d_loss_fake: 0.949, g_loss:0.969, g_recon_loss:0.214
+Epoch:[1]-[21/52] --&gt; d_loss_real: 0.934, d_loss_fake: 0.953, g_loss:0.944, g_recon_loss:0.207
+Epoch:[1]-[22/52] --&gt; d_loss_real: 0.928, d_loss_fake: 0.922, g_loss:0.934, g_recon_loss:0.180
+Epoch:[1]-[23/52] --&gt; d_loss_real: 0.934, d_loss_fake: 0.894, g_loss:0.935, g_recon_loss:0.226
+Epoch:[1]-[24/52] --&gt; d_loss_real: 0.925, d_loss_fake: 0.892, g_loss:0.940, g_recon_loss:0.245
+Epoch:[1]-[25/52] --&gt; d_loss_real: 0.906, d_loss_fake: 0.907, g_loss:0.964, g_recon_loss:0.223
+Epoch:[1]-[26/52] --&gt; d_loss_real: 0.907, d_loss_fake: 0.908, g_loss:0.935, g_recon_loss:0.171
+Epoch:[1]-[27/52] --&gt; d_loss_real: 0.898, d_loss_fake: 0.880, g_loss:0.950, g_recon_loss:0.185
+Epoch:[1]-[28/52] --&gt; d_loss_real: 0.871, d_loss_fake: 0.872, g_loss:0.951, g_recon_loss:0.172
+Epoch:[1]-[29/52] --&gt; d_loss_real: 0.887, d_loss_fake: 0.929, g_loss:0.964, g_recon_loss:0.205
+Epoch:[1]-[30/52] --&gt; d_loss_real: 0.938, d_loss_fake: 0.907, g_loss:0.946, g_recon_loss:0.193
+Epoch:[1]-[31/52] --&gt; d_loss_real: 0.940, d_loss_fake: 0.887, g_loss:1.039, g_recon_loss:0.439
+Epoch:[1]-[32/52] --&gt; d_loss_real: 0.984, d_loss_fake: 0.947, g_loss:1.002, g_recon_loss:0.168
+Epoch:[1]-[33/52] --&gt; d_loss_real: 0.984, d_loss_fake: 0.883, g_loss:0.949, g_recon_loss:0.197
+Epoch:[1]-[34/52] --&gt; d_loss_real: 0.899, d_loss_fake: 0.906, g_loss:0.908, g_recon_loss:0.131
+Epoch:[1]-[35/52] --&gt; d_loss_real: 0.862, d_loss_fake: 0.887, g_loss:0.911, g_recon_loss:0.136
+Epoch:[1]-[36/52] --&gt; d_loss_real: 0.864, d_loss_fake: 0.882, g_loss:0.921, g_recon_loss:0.125
+Epoch:[1]-[37/52] --&gt; d_loss_real: 0.873, d_loss_fake: 0.873, g_loss:0.872, g_recon_loss:0.160
+Epoch:[1]-[38/52] --&gt; d_loss_real: 0.881, d_loss_fake: 0.878, g_loss:0.990, g_recon_loss:0.303
+Epoch:[1]-[39/52] --&gt; d_loss_real: 0.877, d_loss_fake: 1.022, g_loss:0.993, g_recon_loss:0.335
+Epoch:[1]-[40/52] --&gt; d_loss_real: 0.919, d_loss_fake: 0.852, g_loss:0.965, g_recon_loss:0.190
+Epoch:[1]-[41/52] --&gt; d_loss_real: 0.897, d_loss_fake: 0.827, g_loss:0.966, g_recon_loss:0.210
+Epoch:[1]-[42/52] --&gt; d_loss_real: 0.892, d_loss_fake: 0.837, g_loss:0.939, g_recon_loss:0.226
+Epoch:[1]-[43/52] --&gt; d_loss_real: 0.880, d_loss_fake: 0.793, g_loss:1.035, g_recon_loss:0.405
+Epoch:[1]-[44/52] --&gt; d_loss_real: 0.866, d_loss_fake: 0.927, g_loss:0.969, g_recon_loss:0.387
+Epoch:[1]-[45/52] --&gt; d_loss_real: 0.709, d_loss_fake: 0.952, g_loss:0.959, g_recon_loss:0.199
+Epoch:[1]-[46/52] --&gt; d_loss_real: 0.776, d_loss_fake: 1.326, g_loss:0.999, g_recon_loss:0.159
+Epoch:[1]-[47/52] --&gt; d_loss_real: 0.945, d_loss_fake: 0.751, g_loss:0.923, g_recon_loss:0.218
+Epoch:[1]-[48/52] --&gt; d_loss_real: 0.871, d_loss_fake: 1.031, g_loss:0.897, g_recon_loss:0.191
+Epoch:[1]-[49/52] --&gt; d_loss_real: 0.933, d_loss_fake: 0.926, g_loss:0.928, g_recon_loss:0.198
+Epoch:[1]-[50/52] --&gt; d_loss_real: 0.938, d_loss_fake: 0.875, g_loss:0.951, g_recon_loss:0.208
+Epoch:[1]-[51/52] --&gt; d_loss_real: 0.900, d_loss_fake: 0.853, g_loss:0.919, g_recon_loss:0.160
+Epoch (2/5)-------------------------------------------------
+Epoch:[2]-[0/52] --&gt; d_loss_real: 0.924, d_loss_fake: 0.857, g_loss:0.924, g_recon_loss:0.155
+Epoch:[2]-[1/52] --&gt; d_loss_real: 0.920, d_loss_fake: 0.840, g_loss:0.927, g_recon_loss:0.180
+Epoch:[2]-[2/52] --&gt; d_loss_real: 0.910, d_loss_fake: 0.840, g_loss:0.915, g_recon_loss:0.157
+Epoch:[2]-[3/52] --&gt; d_loss_real: 0.885, d_loss_fake: 0.879, g_loss:0.885, g_recon_loss:0.147
+Epoch:[2]-[4/52] --&gt; d_loss_real: 0.855, d_loss_fake: 0.847, g_loss:0.906, g_recon_loss:0.202
+Epoch:[2]-[5/52] --&gt; d_loss_real: 0.842, d_loss_fake: 0.860, g_loss:0.884, g_recon_loss:0.131
+Epoch:[2]-[6/52] --&gt; d_loss_real: 0.827, d_loss_fake: 0.892, g_loss:0.901, g_recon_loss:0.169
+Epoch:[2]-[7/52] --&gt; d_loss_real: 0.863, d_loss_fake: 0.852, g_loss:0.913, g_recon_loss:0.238
+Epoch:[2]-[8/52] --&gt; d_loss_real: 0.887, d_loss_fake: 0.839, g_loss:0.925, g_recon_loss:0.258
+Epoch:[2]-[9/52] --&gt; d_loss_real: 0.941, d_loss_fake: 0.850, g_loss:0.920, g_recon_loss:0.170
+Epoch:[2]-[10/52] --&gt; d_loss_real: 0.893, d_loss_fake: 0.905, g_loss:0.853, g_recon_loss:0.145
+Epoch:[2]-[11/52] --&gt; d_loss_real: 0.832, d_loss_fake: 0.898, g_loss:0.900, g_recon_loss:0.292
+Epoch:[2]-[12/52] --&gt; d_loss_real: 0.828, d_loss_fake: 0.923, g_loss:0.862, g_recon_loss:0.147
+Epoch:[2]-[13/52] --&gt; d_loss_real: 0.863, d_loss_fake: 0.868, g_loss:0.871, g_recon_loss:0.157
+Epoch:[2]-[14/52] --&gt; d_loss_real: 0.864, d_loss_fake: 0.864, g_loss:0.877, g_recon_loss:0.129
+Epoch:[2]-[15/52] --&gt; d_loss_real: 0.860, d_loss_fake: 0.875, g_loss:0.885, g_recon_loss:0.112
+Epoch:[2]-[16/52] --&gt; d_loss_real: 0.885, d_loss_fake: 0.846, g_loss:0.882, g_recon_loss:0.164
+Epoch:[2]-[17/52] --&gt; d_loss_real: 0.892, d_loss_fake: 0.833, g_loss:0.906, g_recon_loss:0.161
+Epoch:[2]-[18/52] --&gt; d_loss_real: 0.915, d_loss_fake: 0.832, g_loss:0.904, g_recon_loss:0.195
+Epoch:[2]-[19/52] --&gt; d_loss_real: 0.881, d_loss_fake: 0.915, g_loss:0.884, g_recon_loss:0.110
+Epoch:[2]-[20/52] --&gt; d_loss_real: 0.855, d_loss_fake: 0.878, g_loss:0.862, g_recon_loss:0.102
+Epoch:[2]-[21/52] --&gt; d_loss_real: 0.848, d_loss_fake: 0.856, g_loss:0.874, g_recon_loss:0.130
+Epoch:[2]-[22/52] --&gt; d_loss_real: 0.850, d_loss_fake: 0.860, g_loss:0.860, g_recon_loss:0.106
+Epoch:[2]-[23/52] --&gt; d_loss_real: 0.877, d_loss_fake: 0.843, g_loss:0.872, g_recon_loss:0.139
+Epoch:[2]-[24/52] --&gt; d_loss_real: 0.862, d_loss_fake: 0.908, g_loss:0.881, g_recon_loss:0.156
+Epoch:[2]-[25/52] --&gt; d_loss_real: 0.860, d_loss_fake: 0.876, g_loss:0.882, g_recon_loss:0.100
+Epoch:[2]-[26/52] --&gt; d_loss_real: 0.865, d_loss_fake: 0.852, g_loss:0.879, g_recon_loss:0.112
+Epoch:[2]-[27/52] --&gt; d_loss_real: 0.868, d_loss_fake: 0.840, g_loss:0.871, g_recon_loss:0.114
+Epoch:[2]-[28/52] --&gt; d_loss_real: 0.853, d_loss_fake: 0.857, g_loss:0.874, g_recon_loss:0.114
+Epoch:[2]-[29/52] --&gt; d_loss_real: 0.859, d_loss_fake: 0.839, g_loss:0.867, g_recon_loss:0.112
+Epoch:[2]-[30/52] --&gt; d_loss_real: 0.858, d_loss_fake: 0.818, g_loss:0.843, g_recon_loss:0.200
+Epoch:[2]-[31/52] --&gt; d_loss_real: 0.837, d_loss_fake: 0.901, g_loss:0.856, g_recon_loss:0.086
+Epoch:[2]-[32/52] --&gt; d_loss_real: 0.852, d_loss_fake: 0.867, g_loss:0.855, g_recon_loss:0.100
+Epoch:[2]-[33/52] --&gt; d_loss_real: 0.836, d_loss_fake: 0.878, g_loss:0.856, g_recon_loss:0.104
+Epoch:[2]-[34/52] --&gt; d_loss_real: 0.841, d_loss_fake: 0.859, g_loss:0.853, g_recon_loss:0.081
+Epoch:[2]-[35/52] --&gt; d_loss_real: 0.844, d_loss_fake: 0.835, g_loss:0.853, g_recon_loss:0.103
+Epoch:[2]-[36/52] --&gt; d_loss_real: 0.842, d_loss_fake: 0.868, g_loss:0.861, g_recon_loss:0.097
+Epoch:[2]-[37/52] --&gt; d_loss_real: 0.848, d_loss_fake: 0.827, g_loss:0.852, g_recon_loss:0.104
+Epoch:[2]-[38/52] --&gt; d_loss_real: 0.850, d_loss_fake: 0.833, g_loss:0.902, g_recon_loss:0.216
+Epoch:[2]-[39/52] --&gt; d_loss_real: 0.918, d_loss_fake: 0.835, g_loss:0.892, g_recon_loss:0.144
+Epoch:[2]-[40/52] --&gt; d_loss_real: 0.877, d_loss_fake: 0.835, g_loss:0.832, g_recon_loss:0.140
+Epoch:[2]-[41/52] --&gt; d_loss_real: 0.804, d_loss_fake: 0.893, g_loss:0.826, g_recon_loss:0.074
+Epoch:[2]-[42/52] --&gt; d_loss_real: 0.809, d_loss_fake: 0.866, g_loss:0.822, g_recon_loss:0.088
+Epoch:[2]-[43/52] --&gt; d_loss_real: 0.807, d_loss_fake: 0.846, g_loss:0.821, g_recon_loss:0.095
+Epoch:[2]-[44/52] --&gt; d_loss_real: 0.812, d_loss_fake: 0.850, g_loss:0.841, g_recon_loss:0.074
+Epoch:[2]-[45/52] --&gt; d_loss_real: 0.824, d_loss_fake: 0.822, g_loss:0.839, g_recon_loss:0.292
+Epoch:[2]-[46/52] --&gt; d_loss_real: 0.841, d_loss_fake: 0.902, g_loss:0.872, g_recon_loss:0.107
+Epoch:[2]-[47/52] --&gt; d_loss_real: 0.839, d_loss_fake: 0.857, g_loss:0.859, g_recon_loss:0.088
+Epoch:[2]-[48/52] --&gt; d_loss_real: 0.833, d_loss_fake: 0.827, g_loss:0.841, g_recon_loss:0.091
+Epoch:[2]-[49/52] --&gt; d_loss_real: 0.821, d_loss_fake: 0.818, g_loss:0.834, g_recon_loss:0.089
+Epoch:[2]-[50/52] --&gt; d_loss_real: 0.819, d_loss_fake: 0.829, g_loss:0.832, g_recon_loss:0.102
+Epoch:[2]-[51/52] --&gt; d_loss_real: 0.835, d_loss_fake: 0.840, g_loss:0.808, g_recon_loss:0.092
+Epoch (3/5)-------------------------------------------------
+Epoch:[3]-[0/52] --&gt; d_loss_real: 0.804, d_loss_fake: 0.869, g_loss:0.826, g_recon_loss:0.089
+Epoch:[3]-[1/52] --&gt; d_loss_real: 0.815, d_loss_fake: 0.856, g_loss:0.849, g_recon_loss:0.087
+Epoch:[3]-[2/52] --&gt; d_loss_real: 0.835, d_loss_fake: 0.820, g_loss:0.833, g_recon_loss:0.113
+Epoch:[3]-[3/52] --&gt; d_loss_real: 0.831, d_loss_fake: 0.856, g_loss:0.872, g_recon_loss:0.086
+Epoch:[3]-[4/52] --&gt; d_loss_real: 0.847, d_loss_fake: 0.816, g_loss:0.829, g_recon_loss:0.129
+Epoch:[3]-[5/52] --&gt; d_loss_real: 0.817, d_loss_fake: 0.863, g_loss:0.826, g_recon_loss:0.088
+Epoch:[3]-[6/52] --&gt; d_loss_real: 0.809, d_loss_fake: 0.792, g_loss:0.796, g_recon_loss:0.127
+Epoch:[3]-[7/52] --&gt; d_loss_real: 0.782, d_loss_fake: 0.891, g_loss:0.850, g_recon_loss:0.087
+Epoch:[3]-[8/52] --&gt; d_loss_real: 0.810, d_loss_fake: 0.841, g_loss:0.792, g_recon_loss:0.079
+Epoch:[3]-[9/52] --&gt; d_loss_real: 0.788, d_loss_fake: 0.872, g_loss:0.814, g_recon_loss:0.092
+Epoch:[3]-[10/52] --&gt; d_loss_real: 0.798, d_loss_fake: 0.854, g_loss:0.830, g_recon_loss:0.090
+Epoch:[3]-[11/52] --&gt; d_loss_real: 0.822, d_loss_fake: 0.840, g_loss:0.817, g_recon_loss:0.122
+Epoch:[3]-[12/52] --&gt; d_loss_real: 0.796, d_loss_fake: 0.838, g_loss:0.814, g_recon_loss:0.096
+Epoch:[3]-[13/52] --&gt; d_loss_real: 0.787, d_loss_fake: 0.861, g_loss:0.836, g_recon_loss:0.075
+Epoch:[3]-[14/52] --&gt; d_loss_real: 0.815, d_loss_fake: 0.804, g_loss:0.828, g_recon_loss:0.207
+Epoch:[3]-[15/52] --&gt; d_loss_real: 0.880, d_loss_fake: 0.782, g_loss:0.939, g_recon_loss:0.113
+Epoch:[3]-[16/52] --&gt; d_loss_real: 0.885, d_loss_fake: 0.762, g_loss:0.888, g_recon_loss:0.113
+Epoch:[3]-[17/52] --&gt; d_loss_real: 0.833, d_loss_fake: 0.776, g_loss:0.828, g_recon_loss:0.093
+Epoch:[3]-[18/52] --&gt; d_loss_real: 0.791, d_loss_fake: 0.902, g_loss:0.707, g_recon_loss:0.112
+Epoch:[3]-[19/52] --&gt; d_loss_real: 0.714, d_loss_fake: 0.940, g_loss:0.769, g_recon_loss:0.090
+Epoch:[3]-[20/52] --&gt; d_loss_real: 0.755, d_loss_fake: 0.927, g_loss:0.844, g_recon_loss:0.091
+Epoch:[3]-[21/52] --&gt; d_loss_real: 0.823, d_loss_fake: 0.844, g_loss:0.801, g_recon_loss:0.086
+Epoch:[3]-[22/52] --&gt; d_loss_real: 0.793, d_loss_fake: 0.828, g_loss:0.780, g_recon_loss:0.095
+Epoch:[3]-[23/52] --&gt; d_loss_real: 0.784, d_loss_fake: 0.850, g_loss:0.811, g_recon_loss:0.082
+Epoch:[3]-[24/52] --&gt; d_loss_real: 0.782, d_loss_fake: 0.819, g_loss:0.780, g_recon_loss:0.079
+Epoch:[3]-[25/52] --&gt; d_loss_real: 0.782, d_loss_fake: 0.865, g_loss:0.822, g_recon_loss:0.080
+Epoch:[3]-[26/52] --&gt; d_loss_real: 0.811, d_loss_fake: 0.803, g_loss:0.791, g_recon_loss:0.092
+Epoch:[3]-[27/52] --&gt; d_loss_real: 0.798, d_loss_fake: 0.849, g_loss:0.851, g_recon_loss:0.080
+Epoch:[3]-[28/52] --&gt; d_loss_real: 0.818, d_loss_fake: 0.781, g_loss:0.804, g_recon_loss:0.105
+Epoch:[3]-[29/52] --&gt; d_loss_real: 0.794, d_loss_fake: 0.822, g_loss:0.814, g_recon_loss:0.072
+Epoch:[3]-[30/52] --&gt; d_loss_real: 0.799, d_loss_fake: 0.762, g_loss:0.765, g_recon_loss:0.144
+Epoch:[3]-[31/52] --&gt; d_loss_real: 0.788, d_loss_fake: 0.838, g_loss:0.872, g_recon_loss:0.094
+Epoch:[3]-[32/52] --&gt; d_loss_real: 0.856, d_loss_fake: 0.792, g_loss:0.830, g_recon_loss:0.087
+Epoch:[3]-[33/52] --&gt; d_loss_real: 0.807, d_loss_fake: 0.795, g_loss:0.776, g_recon_loss:0.101
+Epoch:[3]-[34/52] --&gt; d_loss_real: 0.749, d_loss_fake: 0.859, g_loss:0.779, g_recon_loss:0.084
+Epoch:[3]-[35/52] --&gt; d_loss_real: 0.771, d_loss_fake: 0.891, g_loss:0.790, g_recon_loss:0.138
+Epoch:[3]-[36/52] --&gt; d_loss_real: 0.766, d_loss_fake: 0.852, g_loss:0.811, g_recon_loss:0.078
+Epoch:[3]-[37/52] --&gt; d_loss_real: 0.785, d_loss_fake: 0.809, g_loss:0.781, g_recon_loss:0.081
+Epoch:[3]-[38/52] --&gt; d_loss_real: 0.760, d_loss_fake: 0.882, g_loss:0.816, g_recon_loss:0.078
+Epoch:[3]-[39/52] --&gt; d_loss_real: 0.795, d_loss_fake: 0.781, g_loss:0.786, g_recon_loss:0.158
+Epoch:[3]-[40/52] --&gt; d_loss_real: 0.890, d_loss_fake: 0.672, g_loss:0.965, g_recon_loss:0.113
+Epoch:[3]-[41/52] --&gt; d_loss_real: 0.954, d_loss_fake: 0.734, g_loss:0.837, g_recon_loss:0.103
+Epoch:[3]-[42/52] --&gt; d_loss_real: 0.834, d_loss_fake: 0.999, g_loss:0.643, g_recon_loss:0.145
+Epoch:[3]-[43/52] --&gt; d_loss_real: 0.625, d_loss_fake: 1.018, g_loss:0.752, g_recon_loss:0.110
+Epoch:[3]-[44/52] --&gt; d_loss_real: 0.716, d_loss_fake: 0.868, g_loss:0.782, g_recon_loss:0.093
+Epoch:[3]-[45/52] --&gt; d_loss_real: 0.741, d_loss_fake: 0.839, g_loss:0.795, g_recon_loss:0.089
+Epoch:[3]-[46/52] --&gt; d_loss_real: 0.740, d_loss_fake: 0.844, g_loss:0.778, g_recon_loss:0.088
+Epoch:[3]-[47/52] --&gt; d_loss_real: 0.729, d_loss_fake: 1.006, g_loss:0.762, g_recon_loss:0.090
+Epoch:[3]-[48/52] --&gt; d_loss_real: 0.755, d_loss_fake: 0.832, g_loss:0.789, g_recon_loss:0.092
+Epoch:[3]-[49/52] --&gt; d_loss_real: 0.777, d_loss_fake: 0.767, g_loss:0.771, g_recon_loss:0.092
+Epoch:[3]-[50/52] --&gt; d_loss_real: 0.800, d_loss_fake: 0.789, g_loss:0.863, g_recon_loss:0.097
+Epoch:[3]-[51/52] --&gt; d_loss_real: 0.892, d_loss_fake: 0.745, g_loss:0.750, g_recon_loss:0.120
+Epoch (4/5)-------------------------------------------------
+Epoch:[4]-[0/52] --&gt; d_loss_real: 0.739, d_loss_fake: 0.839, g_loss:0.773, g_recon_loss:0.093
+Epoch:[4]-[1/52] --&gt; d_loss_real: 0.761, d_loss_fake: 0.824, g_loss:0.790, g_recon_loss:0.084
+Epoch:[4]-[2/52] --&gt; d_loss_real: 0.766, d_loss_fake: 0.800, g_loss:0.793, g_recon_loss:0.083
+Epoch:[4]-[3/52] --&gt; d_loss_real: 0.774, d_loss_fake: 0.665, g_loss:1.410, g_recon_loss:0.104
+Epoch:[4]-[4/52] --&gt; d_loss_real: 2.101, d_loss_fake: 0.606, g_loss:1.045, g_recon_loss:0.180
+Epoch:[4]-[5/52] --&gt; d_loss_real: 0.825, d_loss_fake: 0.564, g_loss:0.892, g_recon_loss:0.160
+Epoch:[4]-[6/52] --&gt; d_loss_real: 0.592, d_loss_fake: 1.084, g_loss:0.857, g_recon_loss:0.229
+Epoch:[4]-[7/52] --&gt; d_loss_real: 0.737, d_loss_fake: 0.689, g_loss:0.775, g_recon_loss:0.235
+Epoch:[4]-[8/52] --&gt; d_loss_real: 0.469, d_loss_fake: 1.200, g_loss:0.965, g_recon_loss:0.221
+Epoch:[4]-[9/52] --&gt; d_loss_real: 0.501, d_loss_fake: 1.126, g_loss:0.942, g_recon_loss:0.201
+Epoch:[4]-[10/52] --&gt; d_loss_real: 0.740, d_loss_fake: 0.869, g_loss:0.778, g_recon_loss:0.154
+Epoch:[4]-[11/52] --&gt; d_loss_real: 0.679, d_loss_fake: 0.880, g_loss:0.854, g_recon_loss:0.140
+Epoch:[4]-[12/52] --&gt; d_loss_real: 0.712, d_loss_fake: 0.789, g_loss:0.703, g_recon_loss:0.195
+Epoch:[4]-[13/52] --&gt; d_loss_real: 0.691, d_loss_fake: 1.092, g_loss:0.807, g_recon_loss:0.158
+Epoch:[4]-[14/52] --&gt; d_loss_real: 0.744, d_loss_fake: 0.731, g_loss:0.771, g_recon_loss:0.192
+Epoch:[4]-[15/52] --&gt; d_loss_real: 0.812, d_loss_fake: 0.771, g_loss:0.764, g_recon_loss:0.134
+Epoch:[4]-[16/52] --&gt; d_loss_real: 0.702, d_loss_fake: 0.897, g_loss:0.876, g_recon_loss:0.195
+Epoch:[4]-[17/52] --&gt; d_loss_real: 0.756, d_loss_fake: 0.773, g_loss:0.822, g_recon_loss:0.148
+Epoch:[4]-[18/52] --&gt; d_loss_real: 0.769, d_loss_fake: 0.762, g_loss:0.799, g_recon_loss:0.162
+Epoch:[4]-[19/52] --&gt; d_loss_real: 0.943, d_loss_fake: 0.843, g_loss:0.805, g_recon_loss:0.152
+Epoch:[4]-[20/52] --&gt; d_loss_real: 0.734, d_loss_fake: 0.885, g_loss:0.776, g_recon_loss:0.134
+Epoch:[4]-[21/52] --&gt; d_loss_real: 0.765, d_loss_fake: 0.863, g_loss:0.862, g_recon_loss:0.221
+Epoch:[4]-[22/52] --&gt; d_loss_real: 0.802, d_loss_fake: 0.745, g_loss:0.798, g_recon_loss:0.128
+Epoch:[4]-[23/52] --&gt; d_loss_real: 0.771, d_loss_fake: 0.704, g_loss:0.805, g_recon_loss:0.229
+Epoch:[4]-[24/52] --&gt; d_loss_real: 0.863, d_loss_fake: 0.673, g_loss:0.860, g_recon_loss:0.113
+Epoch:[4]-[25/52] --&gt; d_loss_real: 0.738, d_loss_fake: 0.793, g_loss:0.762, g_recon_loss:0.168
+Epoch:[4]-[26/52] --&gt; d_loss_real: 0.775, d_loss_fake: 0.800, g_loss:0.858, g_recon_loss:0.172
+Epoch:[4]-[27/52] --&gt; d_loss_real: 0.699, d_loss_fake: 0.835, g_loss:0.811, g_recon_loss:0.147
+Epoch:[4]-[28/52] --&gt; d_loss_real: 0.828, d_loss_fake: 0.718, g_loss:0.834, g_recon_loss:0.127
+Epoch:[4]-[29/52] --&gt; d_loss_real: 0.693, d_loss_fake: 0.818, g_loss:0.803, g_recon_loss:0.188
+Epoch:[4]-[30/52] --&gt; d_loss_real: 0.747, d_loss_fake: 0.648, g_loss:0.846, g_recon_loss:0.134
+Epoch:[4]-[31/52] --&gt; d_loss_real: 0.696, d_loss_fake: 0.839, g_loss:0.792, g_recon_loss:0.211
+Epoch:[4]-[32/52] --&gt; d_loss_real: 0.661, d_loss_fake: 0.805, g_loss:0.815, g_recon_loss:0.354
+Epoch:[4]-[33/52] --&gt; d_loss_real: 0.669, d_loss_fake: 0.975, g_loss:0.867, g_recon_loss:0.178
+Epoch:[4]-[34/52] --&gt; d_loss_real: 0.744, d_loss_fake: 0.803, g_loss:0.828, g_recon_loss:0.205
+Epoch:[4]-[35/52] --&gt; d_loss_real: 0.815, d_loss_fake: 0.627, g_loss:0.791, g_recon_loss:0.189
+Epoch:[4]-[36/52] --&gt; d_loss_real: 0.980, d_loss_fake: 0.673, g_loss:0.817, g_recon_loss:0.139
+Epoch:[4]-[37/52] --&gt; d_loss_real: 0.759, d_loss_fake: 0.788, g_loss:0.830, g_recon_loss:0.157
+Epoch:[4]-[38/52] --&gt; d_loss_real: 0.649, d_loss_fake: 0.710, g_loss:0.764, g_recon_loss:0.106
+Epoch:[4]-[39/52] --&gt; d_loss_real: 0.615, d_loss_fake: 0.859, g_loss:0.736, g_recon_loss:0.113
+Epoch:[4]-[40/52] --&gt; d_loss_real: 0.663, d_loss_fake: 0.939, g_loss:0.754, g_recon_loss:0.124
+Epoch:[4]-[41/52] --&gt; d_loss_real: 0.650, d_loss_fake: 1.127, g_loss:0.957, g_recon_loss:0.142
+Epoch:[4]-[42/52] --&gt; d_loss_real: 0.772, d_loss_fake: 0.753, g_loss:0.806, g_recon_loss:0.191
+Epoch:[4]-[43/52] --&gt; d_loss_real: 0.917, d_loss_fake: 0.609, g_loss:0.746, g_recon_loss:0.150
+Epoch:[4]-[44/52] --&gt; d_loss_real: 0.943, d_loss_fake: 0.756, g_loss:0.784, g_recon_loss:0.188
+Epoch:[4]-[45/52] --&gt; d_loss_real: 0.758, d_loss_fake: 0.768, g_loss:0.829, g_recon_loss:0.156
+Epoch:[4]-[46/52] --&gt; d_loss_real: 0.701, d_loss_fake: 0.685, g_loss:0.820, g_recon_loss:0.136
+Epoch:[4]-[47/52] --&gt; d_loss_real: 0.712, d_loss_fake: 0.610, g_loss:0.745, g_recon_loss:0.175
+Epoch:[4]-[48/52] --&gt; d_loss_real: 0.717, d_loss_fake: 0.911, g_loss:0.785, g_recon_loss:0.155
+Epoch:[4]-[49/52] --&gt; d_loss_real: 0.780, d_loss_fake: 0.824, g_loss:0.807, g_recon_loss:0.147
+Epoch:[4]-[50/52] --&gt; d_loss_real: 0.691, d_loss_fake: 0.809, g_loss:0.871, g_recon_loss:0.140
+Epoch:[4]-[51/52] --&gt; d_loss_real: 0.728, d_loss_fake: 0.734, g_loss:0.748, g_recon_loss:0.151
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_4_5.png" alt="png" /></p>
+
+<h2 id="choose-a-stopping-criterion">Choose a stopping criterion</h2>
+<p>The training procedure is stopped when R successfully maps noisy images to clean images carrying the concept of the target class.  When R can reconstruct its input with minimum error. In the following case, we pick the epoch 3.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># This image was generated at the end of the models.py training procedure to help pick a ending epoch to load. 
+</span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s">'plot_g_recon_losses.png'</span><span class="p">)</span> 
+<span class="c1"># Load the epoch #3 saved weights.
+</span><span class="bp">self</span><span class="p">.</span><span class="n">adversarial_model</span><span class="p">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s">'./checkpoint/ALOCC_Model_3.h5'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="test-the-reconstruction-loss-and-discriminator-output">Test the reconstruction loss and Discriminator output</h2>
+<p>The <code class="language-plaintext highlighter-rouge">abnormal</code> image has a <strong><code class="language-plaintext highlighter-rouge">larger</code> reconstruction loss</strong> and <strong><code class="language-plaintext highlighter-rouge">smaller</code> discriminator output value</strong>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_reconstruction</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">data_index</span> <span class="o">=</span> <span class="mi">11</span><span class="p">):</span>
+    <span class="n">specific_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">where</span><span class="p">(</span><span class="n">y_train</span> <span class="o">==</span> <span class="n">label</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">data_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">):</span>
+        <span class="n">data_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">datas</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="n">specific_idx</span><span class="p">].</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="n">data_index</span><span class="p">:</span><span class="n">data_index</span><span class="o">+</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">model_predicts</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">adversarial_model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span>
+    <span class="n">input_images</span> <span class="o">=</span> <span class="p">[</span><span class="n">datas</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">reshape</span><span class="p">((</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+    <span class="n">reconstructed_images</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_predicts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">].</span><span class="n">reshape</span><span class="p">((</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+    
+    <span class="n">fig</span><span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Input'</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">input_images</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">'Input'</span><span class="p">)</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">6</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Reconstruction'</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">reconstructed_images</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">'Reconstructed'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+    
+    
+    <span class="c1"># Compute the mean binary_crossentropy loss of reconstructed image.
+</span>    <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">y_true</span> <span class="o">=</span> <span class="n">K</span><span class="p">.</span><span class="n">variable</span><span class="p">(</span><span class="n">reconstructed_images</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">K</span><span class="p">.</span><span class="n">variable</span><span class="p">(</span><span class="n">input_images</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">errors</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">K</span><span class="p">.</span><span class="nb">eval</span><span class="p">(</span><span class="n">binary_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)).</span><span class="n">mean</span><span class="p">())</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'Average reconstruction loss:'</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">errors</span><span class="p">).</span><span class="n">mean</span><span class="p">())</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'Average discriminator Output:'</span><span class="p">,</span> <span class="n">model_predicts</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">mean</span><span class="p">())</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">draw_histogram</span><span class="p">():</span>
+    <span class="n">data_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">X_train</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">where</span><span class="p">(</span><span class="n">y_train</span> <span class="o">==</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]].</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">)]</span>
+    <span class="n">D_Outputs</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">self</span><span class="p">.</span><span class="n">adversarial_model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">n</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">1</span><span class="p">))[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">)]</span>
+    
+    <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">hist</span><span class="p">(</span><span class="n">D_Outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s">'none'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s">'step'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Inlier"</span><span class="p">)</span>
+    <span class="n">outlier_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">D_Outputs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">hist</span><span class="p">(</span><span class="n">outlier_list</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s">'none'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s">'step'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Outlier"</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"Discriminator Output"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"Count"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Output multiple Histograms"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s">'upper right'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">'paper_original_result.png'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="normal-case">Normal case</h3>
+<p>The network was trained with label == 1.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">test_reconstruction</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_12_0.png" alt="png" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Average reconstruction loss: 0.13995047
+Average discriminator Output: 0.46022063
+</code></pre></div></div>
+
+<h2 id="abnormal-cases">Abnormal cases</h2>
+<p>The network was not trained on those labels, so the Generator/R network find it hard to reconstruct the input images reflected in higher reconstruction loss values.</p>
+
+<p>Discriminator also outputs a lower value compared to normal ones.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">test_reconstruction</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_14_0.png" alt="png" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Average reconstruction loss: 1.0208124
+Average discriminator Output: 0.6488284
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">test_reconstruction</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_15_0.png" alt="png" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Average reconstruction loss: 1.1040308
+Average discriminator Output: 0.6433686
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">test_reconstruction</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_16_0.png" alt="png" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Average reconstruction loss: 0.51506275
+Average discriminator Output: 0.54887545
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">draw_histogram</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_17_0.png" alt="png" /></p>
+
+<h3 id="mobiis-추가-연구사항">mobiis 추가 연구사항</h3>
+<ol>
+  <li>D 모델을 조금더 복잡하게 구성</li>
+  <li>R 모델 학습을 조금 더디게 진행</li>
+  <li>노이즈 없이 학습</li>
+</ol>
+
+<h3 id="1-enhance-d-network---add-1-dense-layer">1. Enhance D network - Add 1 dense layer</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="n">sys</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">'test/enhance_D/'</span><span class="p">)</span>
+<span class="n">importlib</span><span class="p">.</span><span class="nb">reload</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">ALOCC_Model</span>
+<span class="bp">self</span> <span class="o">=</span> <span class="n">ALOCC_Model</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s">'mnist'</span><span class="p">,</span> <span class="n">input_height</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span><span class="n">input_width</span><span class="o">=</span><span class="mi">28</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>generator
+Model: "R"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+z (InputLayer)               (None, 28, 28, 1)         0         
+_________________________________________________________________
+g_encoder_h0_conv (Conv2D)   (None, 14, 14, 32)        832       
+_________________________________________________________________
+batch_normalization_70 (Batc (None, 14, 14, 32)        128       
+_________________________________________________________________
+leaky_re_lu_82 (LeakyReLU)   (None, 14, 14, 32)        0         
+_________________________________________________________________
+g_encoder_h1_conv (Conv2D)   (None, 7, 7, 64)          51264     
+_________________________________________________________________
+batch_normalization_71 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+leaky_re_lu_83 (LeakyReLU)   (None, 7, 7, 64)          0         
+_________________________________________________________________
+g_encoder_h2_conv (Conv2D)   (None, 4, 4, 128)         204928    
+_________________________________________________________________
+batch_normalization_72 (Batc (None, 4, 4, 128)         512       
+_________________________________________________________________
+leaky_re_lu_84 (LeakyReLU)   (None, 4, 4, 128)         0         
+_________________________________________________________________
+conv2d_45 (Conv2D)           (None, 4, 4, 16)          51216     
+_________________________________________________________________
+up_sampling2d_34 (UpSampling (None, 8, 8, 16)          0         
+_________________________________________________________________
+conv2d_46 (Conv2D)           (None, 8, 8, 16)          6416      
+_________________________________________________________________
+up_sampling2d_35 (UpSampling (None, 16, 16, 16)        0         
+_________________________________________________________________
+conv2d_47 (Conv2D)           (None, 14, 14, 32)        4640      
+_________________________________________________________________
+up_sampling2d_36 (UpSampling (None, 28, 28, 32)        0         
+_________________________________________________________________
+conv2d_48 (Conv2D)           (None, 28, 28, 1)         801       
+=================================================================
+Total params: 320,993
+Trainable params: 320,545
+Non-trainable params: 448
+_________________________________________________________________
+
+discriminator
+Model: "D"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+d_input (InputLayer)         (None, 28, 28, 1)         0         
+_________________________________________________________________
+d_h0_conv (Conv2D)           (None, 14, 14, 16)        416       
+_________________________________________________________________
+leaky_re_lu_78 (LeakyReLU)   (None, 14, 14, 16)        0         
+_________________________________________________________________
+d_h1_conv (Conv2D)           (None, 7, 7, 32)          12832     
+_________________________________________________________________
+batch_normalization_67 (Batc (None, 7, 7, 32)          128       
+_________________________________________________________________
+leaky_re_lu_79 (LeakyReLU)   (None, 7, 7, 32)          0         
+_________________________________________________________________
+d_h2_conv (Conv2D)           (None, 4, 4, 64)          51264     
+_________________________________________________________________
+batch_normalization_68 (Batc (None, 4, 4, 64)          256       
+_________________________________________________________________
+leaky_re_lu_80 (LeakyReLU)   (None, 4, 4, 64)          0         
+_________________________________________________________________
+d_h3_conv (Conv2D)           (None, 2, 2, 128)         204928    
+_________________________________________________________________
+batch_normalization_69 (Batc (None, 2, 2, 128)         512       
+_________________________________________________________________
+leaky_re_lu_81 (LeakyReLU)   (None, 2, 2, 128)         0         
+_________________________________________________________________
+flatten_12 (Flatten)         (None, 512)               0         
+_________________________________________________________________
+dense_4 (Dense)              (None, 32)                16416     
+_________________________________________________________________
+d_h3_lin (Dense)             (None, 1)                 33        
+=================================================================
+Total params: 573,122
+Trainable params: 286,337
+Non-trainable params: 286,785
+_________________________________________________________________
+
+adversarial_model
+Model: "model_12"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_12 (InputLayer)        (None, 28, 28, 1)         0         
+_________________________________________________________________
+R (Model)                    (None, 28, 28, 1)         320993    
+_________________________________________________________________
+D (Model)                    (None, 1)                 286785    
+=================================================================
+Total params: 607,778
+Trainable params: 320,545
+Non-trainable params: 287,233
+_________________________________________________________________
+
+
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="bp">self</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">sample_interval</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Epoch (0/5)-------------------------------------------------
+
+
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+
+
+Epoch (1/5)-------------------------------------------------
+Epoch (2/5)-------------------------------------------------
+Epoch (3/5)-------------------------------------------------
+Epoch (4/5)-------------------------------------------------
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_21_3.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Load the epoch #3 saved weights.
+</span><span class="bp">self</span><span class="p">.</span><span class="n">adversarial_model</span><span class="p">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s">'./checkpoint/ALOCC_Model_3.h5'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">draw_histogram</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_23_0.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+
+<h3 id="2-slower-r-network-learning---기존-1-batch당-두번-학습에서-한번으로-변경">2. Slower R network learning - 기존 1 batch당 두번 학습에서 한번으로 변경</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="n">sys</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">'test/slow_R/'</span><span class="p">)</span>
+<span class="n">importlib</span><span class="p">.</span><span class="nb">reload</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">ALOCC_Model</span>
+<span class="bp">self</span> <span class="o">=</span> <span class="n">ALOCC_Model</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s">'mnist'</span><span class="p">,</span> <span class="n">input_height</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span><span class="n">input_width</span><span class="o">=</span><span class="mi">28</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>generator
+Model: "R"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+z (InputLayer)               (None, 28, 28, 1)         0         
+_________________________________________________________________
+g_encoder_h0_conv (Conv2D)   (None, 14, 14, 32)        832       
+_________________________________________________________________
+batch_normalization_58 (Batc (None, 14, 14, 32)        128       
+_________________________________________________________________
+leaky_re_lu_68 (LeakyReLU)   (None, 14, 14, 32)        0         
+_________________________________________________________________
+g_encoder_h1_conv (Conv2D)   (None, 7, 7, 64)          51264     
+_________________________________________________________________
+batch_normalization_59 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+leaky_re_lu_69 (LeakyReLU)   (None, 7, 7, 64)          0         
+_________________________________________________________________
+g_encoder_h2_conv (Conv2D)   (None, 4, 4, 128)         204928    
+_________________________________________________________________
+batch_normalization_60 (Batc (None, 4, 4, 128)         512       
+_________________________________________________________________
+leaky_re_lu_70 (LeakyReLU)   (None, 4, 4, 128)         0         
+_________________________________________________________________
+conv2d_37 (Conv2D)           (None, 4, 4, 16)          51216     
+_________________________________________________________________
+up_sampling2d_28 (UpSampling (None, 8, 8, 16)          0         
+_________________________________________________________________
+conv2d_38 (Conv2D)           (None, 8, 8, 16)          6416      
+_________________________________________________________________
+up_sampling2d_29 (UpSampling (None, 16, 16, 16)        0         
+_________________________________________________________________
+conv2d_39 (Conv2D)           (None, 14, 14, 32)        4640      
+_________________________________________________________________
+up_sampling2d_30 (UpSampling (None, 28, 28, 32)        0         
+_________________________________________________________________
+conv2d_40 (Conv2D)           (None, 28, 28, 1)         801       
+=================================================================
+Total params: 320,993
+Trainable params: 320,545
+Non-trainable params: 448
+_________________________________________________________________
+
+discriminator
+Model: "D"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+d_input (InputLayer)         (None, 28, 28, 1)         0         
+_________________________________________________________________
+d_h0_conv (Conv2D)           (None, 14, 14, 16)        416       
+_________________________________________________________________
+leaky_re_lu_64 (LeakyReLU)   (None, 14, 14, 16)        0         
+_________________________________________________________________
+d_h1_conv (Conv2D)           (None, 7, 7, 32)          12832     
+_________________________________________________________________
+batch_normalization_55 (Batc (None, 7, 7, 32)          128       
+_________________________________________________________________
+leaky_re_lu_65 (LeakyReLU)   (None, 7, 7, 32)          0         
+_________________________________________________________________
+d_h2_conv (Conv2D)           (None, 4, 4, 64)          51264     
+_________________________________________________________________
+batch_normalization_56 (Batc (None, 4, 4, 64)          256       
+_________________________________________________________________
+leaky_re_lu_66 (LeakyReLU)   (None, 4, 4, 64)          0         
+_________________________________________________________________
+d_h3_conv (Conv2D)           (None, 2, 2, 128)         204928    
+_________________________________________________________________
+batch_normalization_57 (Batc (None, 2, 2, 128)         512       
+_________________________________________________________________
+leaky_re_lu_67 (LeakyReLU)   (None, 2, 2, 128)         0         
+_________________________________________________________________
+flatten_10 (Flatten)         (None, 512)               0         
+_________________________________________________________________
+d_h3_lin (Dense)             (None, 1)                 513       
+=================================================================
+Total params: 541,250
+Trainable params: 270,401
+Non-trainable params: 270,849
+_________________________________________________________________
+
+adversarial_model
+Model: "model_10"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_10 (InputLayer)        (None, 28, 28, 1)         0         
+_________________________________________________________________
+R (Model)                    (None, 28, 28, 1)         320993    
+_________________________________________________________________
+D (Model)                    (None, 1)                 270849    
+=================================================================
+Total params: 591,842
+Trainable params: 320,545
+Non-trainable params: 271,297
+_________________________________________________________________
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="bp">self</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">sample_interval</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Epoch (0/5)-------------------------------------------------
+
+
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+
+
+Epoch (1/5)-------------------------------------------------
+Epoch (2/5)-------------------------------------------------
+Epoch (3/5)-------------------------------------------------
+Epoch (4/5)-------------------------------------------------
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_27_3.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Load the epoch #4 saved weights.
+</span><span class="bp">self</span><span class="p">.</span><span class="n">adversarial_model</span><span class="p">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s">'./checkpoint/ALOCC_Model_3.h5'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">draw_histogram</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_29_0.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+
+<h3 id="3-learning-without-noise">3. Learning without noise</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="n">sys</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">'test/without_noise/'</span><span class="p">)</span>
+<span class="n">importlib</span><span class="p">.</span><span class="nb">reload</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">ALOCC_Model</span>
+<span class="bp">self</span> <span class="o">=</span> <span class="n">ALOCC_Model</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s">'mnist'</span><span class="p">,</span> <span class="n">input_height</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span><span class="n">input_width</span><span class="o">=</span><span class="mi">28</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>generator
+Model: "R"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+z (InputLayer)               (None, 28, 28, 1)         0         
+_________________________________________________________________
+g_encoder_h0_conv (Conv2D)   (None, 14, 14, 32)        832       
+_________________________________________________________________
+batch_normalization_34 (Batc (None, 14, 14, 32)        128       
+_________________________________________________________________
+leaky_re_lu_40 (LeakyReLU)   (None, 14, 14, 32)        0         
+_________________________________________________________________
+g_encoder_h1_conv (Conv2D)   (None, 7, 7, 64)          51264     
+_________________________________________________________________
+batch_normalization_35 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+leaky_re_lu_41 (LeakyReLU)   (None, 7, 7, 64)          0         
+_________________________________________________________________
+g_encoder_h2_conv (Conv2D)   (None, 4, 4, 128)         204928    
+_________________________________________________________________
+batch_normalization_36 (Batc (None, 4, 4, 128)         512       
+_________________________________________________________________
+leaky_re_lu_42 (LeakyReLU)   (None, 4, 4, 128)         0         
+_________________________________________________________________
+conv2d_21 (Conv2D)           (None, 4, 4, 16)          51216     
+_________________________________________________________________
+up_sampling2d_16 (UpSampling (None, 8, 8, 16)          0         
+_________________________________________________________________
+conv2d_22 (Conv2D)           (None, 8, 8, 16)          6416      
+_________________________________________________________________
+up_sampling2d_17 (UpSampling (None, 16, 16, 16)        0         
+_________________________________________________________________
+conv2d_23 (Conv2D)           (None, 14, 14, 32)        4640      
+_________________________________________________________________
+up_sampling2d_18 (UpSampling (None, 28, 28, 32)        0         
+_________________________________________________________________
+conv2d_24 (Conv2D)           (None, 28, 28, 1)         801       
+=================================================================
+Total params: 320,993
+Trainable params: 320,545
+Non-trainable params: 448
+_________________________________________________________________
+
+discriminator
+Model: "D"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+d_input (InputLayer)         (None, 28, 28, 1)         0         
+_________________________________________________________________
+d_h0_conv (Conv2D)           (None, 14, 14, 16)        416       
+_________________________________________________________________
+leaky_re_lu_36 (LeakyReLU)   (None, 14, 14, 16)        0         
+_________________________________________________________________
+d_h1_conv (Conv2D)           (None, 7, 7, 32)          12832     
+_________________________________________________________________
+batch_normalization_31 (Batc (None, 7, 7, 32)          128       
+_________________________________________________________________
+leaky_re_lu_37 (LeakyReLU)   (None, 7, 7, 32)          0         
+_________________________________________________________________
+d_h2_conv (Conv2D)           (None, 4, 4, 64)          51264     
+_________________________________________________________________
+batch_normalization_32 (Batc (None, 4, 4, 64)          256       
+_________________________________________________________________
+leaky_re_lu_38 (LeakyReLU)   (None, 4, 4, 64)          0         
+_________________________________________________________________
+d_h3_conv (Conv2D)           (None, 2, 2, 128)         204928    
+_________________________________________________________________
+batch_normalization_33 (Batc (None, 2, 2, 128)         512       
+_________________________________________________________________
+leaky_re_lu_39 (LeakyReLU)   (None, 2, 2, 128)         0         
+_________________________________________________________________
+flatten_6 (Flatten)          (None, 512)               0         
+_________________________________________________________________
+d_h3_lin (Dense)             (None, 1)                 513       
+=================================================================
+Total params: 541,250
+Trainable params: 270,401
+Non-trainable params: 270,849
+_________________________________________________________________
+
+adversarial_model
+Model: "model_6"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_6 (InputLayer)         (None, 28, 28, 1)         0         
+_________________________________________________________________
+R (Model)                    (None, 28, 28, 1)         320993    
+_________________________________________________________________
+D (Model)                    (None, 1)                 270849    
+=================================================================
+Total params: 591,842
+Trainable params: 320,545
+Non-trainable params: 271,297
+_________________________________________________________________
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="bp">self</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">sample_interval</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Epoch (0/5)-------------------------------------------------
+
+
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+/home/dolphin/.virtualenvs/bio/lib/python3.6/site-packages/keras/engine/training.py:297: UserWarning: Discrepancy between trainable weights and collected trainable weights, did you set `model.trainable` without calling `model.compile` after ?
+  'Discrepancy between trainable weights and collected trainable'
+
+
+Epoch (1/5)-------------------------------------------------
+Epoch (2/5)-------------------------------------------------
+Epoch (3/5)-------------------------------------------------
+Epoch (4/5)-------------------------------------------------
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_33_3.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Load the epoch #4 saved weights.
+</span><span class="bp">self</span><span class="p">.</span><span class="n">adversarial_model</span><span class="p">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s">'./checkpoint/ALOCC_Model_3.h5'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">draw_histogram</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/alocc_files/alocc_35_0.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">reconstruction</span> <span class="n">loss의</span> <span class="n">loss_weight</span> <span class="n">를</span> <span class="n">높혀서</span> <span class="n">트레이닝을</span> <span class="n">하면</span> <span class="n">D모델을</span> <span class="n">속이려는</span> <span class="n">성향보다</span> <span class="n">이미지를</span> <span class="n">깔끔하게</span> <span class="n">만드려는</span> <span class="n">성향이</span> <span class="n">강해지고</span>
+<span class="n">reconstruction</span> <span class="n">loss의</span> <span class="n">loss_weight</span> <span class="n">를</span> <span class="n">낮혀서</span> <span class="n">트레이닝을</span> <span class="n">하면</span> <span class="n">이미지를</span> <span class="n">깔끔하게</span> <span class="n">바꾸려는</span> <span class="n">성향보다</span> <span class="n">어떻게</span> <span class="n">하든</span> <span class="n">D모델을</span> <span class="n">속이면</span> <span class="n">되는</span> <span class="n">쪽으로</span> <span class="n">학습이</span> <span class="n">된다</span><span class="p">.</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2020-10-26T00:00:00+09:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe"><i class="fas fa-rss"></i> <a type="application/rss+xml" href="/feed.xml">구독하기</a></div>
+</div><div class="article__license"><div class="license">
+    <p>이 글의 저작권은 <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">Attribution-NonCommercial 4.0 International</a> 라이센스를 따릅니다.
+      <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">
+        <img alt="Attribution-NonCommercial 4.0 International" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>이전</span><a href="/2020/10/26/GAN_basic.html">GAN Basic</a></div><div class="next"><span>다음</span><a href="/2020/10/26/fullconvnet.html">Fullconvnet</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mobiismlteam"><meta itemprop="url" content="/"><meta itemprop="description" content="Mobiis ML Team"><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Github에서 팔로우하기">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mobiismlteam" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mobiis ML Team - Tech blog 2020,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">검색</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        취소</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script><script type="text/x-mathjax-config">
+	var _config = { tex2jax: {
+		inlineMath: [['$','$'], ['\\(','\\)']]
+	}};MathJax.Hub.Config(_config);
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  window.Lazyload.js('https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js', function() {
+    mermaid.initialize({
+      startOnLoad: true
+    });
+    mermaid.init(undefined, '.language-mermaid');
+  });
+</script>
+
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+

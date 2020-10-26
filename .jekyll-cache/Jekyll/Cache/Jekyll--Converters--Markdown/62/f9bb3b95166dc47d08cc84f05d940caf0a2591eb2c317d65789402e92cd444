@@ -1,0 +1,422 @@
+I"-�<h2 id="settings">Settings</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">load_ext</span> <span class="n">autoreload</span>
+<span class="o">%</span><span class="n">autoreload</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<h1 id="main">Main</h1>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">ignite.metrics</span> <span class="kn">import</span> <span class="n">Accuracy</span><span class="p">,</span> <span class="n">Loss</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span> <span class="c1"># loss 조정해
+</span><span class="n">opt_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="n">Adam</span>
+<span class="n">lr</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="n">val_metrics</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1">#'acc': Accuracy(),
+</span>        <span class="s">'loss'</span><span class="p">:</span> <span class="n">Loss</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">)</span>
+        <span class="p">}</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s">'cuda:1'</span>
+<span class="n">max_epochs</span> <span class="o">=</span> <span class="mi">1000</span>
+</code></pre></div></div>
+
+<h2 id="load-data">Load Data</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">VOCSegmentation</span>
+<span class="kn">from</span> <span class="nn">torchvision.transforms</span> <span class="kn">import</span> <span class="n">ToTensor</span><span class="p">,</span> <span class="n">CenterCrop</span>
+
+<span class="k">class</span> <span class="nc">ToTensor_</span><span class="p">(</span><span class="n">ToTensor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">pic</span><span class="p">.</span><span class="n">size</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-</span> <span class="p">(</span><span class="n">w</span> <span class="o">%</span> <span class="mi">32</span><span class="p">),</span> <span class="n">h</span> <span class="o">-</span> <span class="p">(</span><span class="n">h</span> <span class="o">%</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ToTensor</span><span class="p">()(</span><span class="n">CenterCrop</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">))(</span><span class="n">pic</span><span class="p">))</span>
+
+<span class="k">class</span> <span class="nc">PILToTensor</span><span class="p">(</span><span class="n">ToTensor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">pic</span><span class="p">.</span><span class="n">size</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-</span> <span class="p">(</span><span class="n">w</span> <span class="o">%</span> <span class="mi">32</span><span class="p">),</span> <span class="n">h</span> <span class="o">-</span> <span class="p">(</span><span class="n">h</span> <span class="o">%</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">pic</span> <span class="o">=</span> <span class="n">CenterCrop</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">))(</span><span class="n">pic</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pic</span><span class="p">))</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="n">pic</span><span class="p">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pic</span><span class="p">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">pic</span><span class="p">.</span><span class="n">getbands</span><span class="p">()))</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="p">.</span><span class="n">permute</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="p">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">255</span><span class="p">:</span>
+                <span class="n">img</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">21</span>
+        <span class="k">return</span> <span class="n">img</span><span class="p">.</span><span class="nb">long</span><span class="p">().</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">train_dataset</span> <span class="o">=</span> <span class="n">VOCSegmentation</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s">'data/'</span><span class="p">,</span> <span class="n">image_set</span><span class="o">=</span><span class="s">'train'</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor_</span><span class="p">(),</span> <span class="n">target_transform</span><span class="o">=</span><span class="n">PILToTensor</span><span class="p">(),</span> <span class="n">download</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">val_dataset</span> <span class="o">=</span> <span class="n">VOCSegmentation</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s">'data/'</span><span class="p">,</span> <span class="n">image_set</span><span class="o">=</span><span class="s">'val'</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor_</span><span class="p">(),</span> <span class="n">target_transform</span><span class="o">=</span><span class="n">PILToTensor</span><span class="p">(),</span> <span class="n">download</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">'# train data:'</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'# val data  :'</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">val_dataset</span><span class="p">))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># train data: 1464
+# val data  : 1449
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="n">val_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">val_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="construct-model">Construct Model</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">FullConvNet</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    cfg = [(n_channel, ), (), ...]
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_class</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FullConvNet</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">models</span><span class="p">.</span><span class="n">vgg19</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">features</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">.</span><span class="n">parameters</span><span class="p">():</span>
+                <span class="n">param</span><span class="p">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">n_currch</span> <span class="o">=</span> <span class="mi">512</span>
+        <span class="k">for</span> <span class="n">n_nextch</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">ReLU</span><span class="p">(</span><span class="bp">True</span><span class="p">))</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">ConvTranspose2d</span><span class="p">(</span><span class="n">n_currch</span><span class="p">,</span> <span class="n">n_nextch</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">output_padding</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">n_currch</span> <span class="o">=</span> <span class="n">n_nextch</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">n_currch</span><span class="p">,</span> <span class="n">n_class</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">add_module</span><span class="p">(</span><span class="s">'l{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">layer</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">FullConvNet</span><span class="p">(</span><span class="mi">22</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="train">Train</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">ignite.engine</span> <span class="kn">import</span> <span class="n">Events</span><span class="p">,</span> <span class="n">create_supervised_trainer</span><span class="p">,</span> <span class="n">create_supervised_evaluator</span>
+
+<span class="k">def</span> <span class="nf">train_net</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">val_metrics</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">val_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">net</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">prepare_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">y</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">output_transform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">y_pred</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># =======================================
+</span>    <span class="n">trainer</span> <span class="o">=</span> <span class="n">create_supervised_trainer</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span>
+            <span class="n">prepare_batch</span><span class="o">=</span><span class="n">prepare_batch</span><span class="p">,</span> <span class="n">output_transform</span><span class="o">=</span><span class="n">output_transform</span><span class="p">)</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">create_supervised_evaluator</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">val_metrics</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span>
+            <span class="n">prepare_batch</span><span class="o">=</span><span class="n">prepare_batch</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s">'{}: {:.2f} '</span>
+    <span class="o">@</span><span class="n">trainer</span><span class="p">.</span><span class="n">on</span><span class="p">(</span><span class="n">Events</span><span class="p">.</span><span class="n">EPOCH_COMPLETED</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">log_training_results</span><span class="p">(</span><span class="n">trainer</span><span class="p">):</span>
+        <span class="n">evaluator</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'Epoch {}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">trainer</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">epoch</span><span class="p">))</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">'Train - '</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">val_metrics</span><span class="p">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="n">s</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="o">@</span><span class="n">trainer</span><span class="p">.</span><span class="n">on</span><span class="p">(</span><span class="n">Events</span><span class="p">.</span><span class="n">EPOCH_COMPLETED</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">log_validation_results</span><span class="p">(</span><span class="n">trainer</span><span class="p">):</span>
+        <span class="n">evaluator</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">val_loader</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">'Val   - '</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">val_metrics</span><span class="p">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="n">s</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">trainer</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">opt</span> <span class="o">=</span> <span class="n">opt_</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="p">)</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">train_net</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">val_metrics</span><span class="p">,</span>
+        <span class="n">train_loader</span><span class="p">,</span> <span class="n">val_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">trainer</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">train_loader</span><span class="p">,</span> <span class="n">max_epochs</span><span class="o">=</span><span class="n">max_epochs</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Epoch 1
+Train - loss: 1.17 
+Val   - loss: 1.20 
+Epoch 2
+Train - loss: 0.97 
+Val   - loss: 1.02 
+Epoch 3
+Train - loss: 0.87 
+Val   - loss: 0.95 
+Epoch 4
+Train - loss: 0.79 
+Val   - loss: 0.92 
+Epoch 5
+Train - loss: 0.73 
+Val   - loss: 0.94 
+Epoch 6
+Train - loss: 0.68 
+Val   - loss: 0.98 
+Epoch 7
+Train - loss: 0.65 
+Val   - loss: 1.08 
+Epoch 8
+Train - loss: 0.60 
+Val   - loss: 1.15 
+Epoch 9
+Train - loss: 0.58 
+Val   - loss: 1.27 
+Epoch 10
+Train - loss: 0.56 
+Val   - loss: 1.29 
+Epoch 11
+Train - loss: 0.53 
+Val   - loss: 1.38 
+Epoch 12
+Train - loss: 0.49 
+Val   - loss: 1.47 
+Epoch 13
+Train - loss: 0.46 
+Val   - loss: 1.48 
+Epoch 14
+Train - loss: 0.47 
+Val   - loss: 1.57 
+Epoch 15
+Train - loss: 0.48 
+Val   - loss: 1.67 
+Epoch 16
+Train - loss: 0.49 
+Val   - loss: 1.66 
+Epoch 17
+Train - loss: 0.47 
+Val   - loss: 1.76 
+Epoch 18
+Train - loss: 0.37 
+Val   - loss: 1.74 
+Epoch 19
+Train - loss: 0.36 
+Val   - loss: 1.80 
+Epoch 20
+Train - loss: 0.34 
+Val   - loss: 1.77 
+Epoch 21
+Train - loss: 0.32 
+Val   - loss: 1.83 
+Epoch 22
+Train - loss: 0.38 
+Val   - loss: 1.95 
+Epoch 23
+Train - loss: 0.31 
+Val   - loss: 1.91 
+Epoch 24
+Train - loss: 0.28 
+Val   - loss: 1.89 
+Epoch 25
+Train - loss: 0.28 
+Val   - loss: 2.05 
+Epoch 26
+Train - loss: 0.26 
+Val   - loss: 1.98 
+Epoch 27
+Train - loss: 0.20 
+Val   - loss: 1.93 
+Epoch 28
+Train - loss: 0.21 
+Val   - loss: 2.01 
+Epoch 29
+Train - loss: 0.22 
+Val   - loss: 2.20 
+Epoch 30
+Train - loss: 0.19 
+Val   - loss: 2.15 
+
+
+Engine run is terminating due to exception: .
+Engine run is terminating due to exception: .
+
+
+
+---------------------------------------------------------------------------
+
+KeyboardInterrupt                         Traceback (most recent call last)
+
+&lt;ipython-input-9-8ac1a0a79e01&gt; in &lt;module&gt;
+      3 trainer = train_net(model, opt, loss_fn, val_metrics,
+      4         train_loader, val_loader, device)
+----&gt; 5 trainer.run(train_loader, max_epochs=max_epochs)
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in run(self, data, max_epochs, epoch_length, seed)
+    656 
+    657         self.state.dataloader = data
+--&gt; 658         return self._internal_run()
+    659 
+    660     @staticmethod
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    720             self._dataloader_iter = None
+    721             self.logger.error("Engine run is terminating due to exception: %s.", str(e))
+--&gt; 722             self._handle_exception(e)
+    723 
+    724         self._dataloader_iter = None
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _handle_exception(self, e)
+    435             self._fire_event(Events.EXCEPTION_RAISED, e)
+    436         else:
+--&gt; 437             raise e
+    438 
+    439     @property
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    708                     self.logger.info(elapsed_time_message)
+    709                     break
+--&gt; 710                 self._fire_event(Events.EPOCH_COMPLETED)
+    711                 self.logger.info(elapsed_time_message)
+    712 
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _fire_event(self, event_name, *event_args, **event_kwargs)
+    391                 kwargs.update(event_kwargs)
+    392                 first, others = ((args[0],), args[1:]) if (args and args[0] == self) else ((), args)
+--&gt; 393                 func(*first, *(event_args + others), **kwargs)
+    394 
+    395     def fire_event(self, event_name: Any) -&gt; None:
+
+
+&lt;ipython-input-8-05b4a011b4ff&gt; in log_training_results(trainer)
+     15     @trainer.on(Events.EPOCH_COMPLETED)
+     16     def log_training_results(trainer):
+---&gt; 17         evaluator.run(train_loader)
+     18         print('Epoch {}'.format(trainer.state.epoch))
+     19         message = 'Train - '
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in run(self, data, max_epochs, epoch_length, seed)
+    656 
+    657         self.state.dataloader = data
+--&gt; 658         return self._internal_run()
+    659 
+    660     @staticmethod
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    720             self._dataloader_iter = None
+    721             self.logger.error("Engine run is terminating due to exception: %s.", str(e))
+--&gt; 722             self._handle_exception(e)
+    723 
+    724         self._dataloader_iter = None
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _handle_exception(self, e)
+    435             self._fire_event(Events.EXCEPTION_RAISED, e)
+    436         else:
+--&gt; 437             raise e
+    438 
+    439     @property
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    695                     self._setup_engine()
+    696 
+--&gt; 697                 time_taken = self._run_once_on_dataset()
+    698                 self.state.times[Events.EPOCH_COMPLETED.name] = time_taken
+    699                 hours, mins, secs = _to_hours_mins_secs(time_taken)
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _run_once_on_dataset(self)
+    737                     if self.last_event_name != Events.DATALOADER_STOP_ITERATION:
+    738                         self._fire_event(Events.GET_BATCH_STARTED)
+--&gt; 739                     self.state.batch = next(self._dataloader_iter)
+    740                     self._fire_event(Events.GET_BATCH_COMPLETED)
+    741                     iter_counter += 1
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/dataloader.py in __next__(self)
+    343 
+    344     def __next__(self):
+--&gt; 345         data = self._next_data()
+    346         self._num_yielded += 1
+    347         if self._dataset_kind == _DatasetKind.Iterable and \
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/dataloader.py in _next_data(self)
+    383     def _next_data(self):
+    384         index = self._next_index()  # may raise StopIteration
+--&gt; 385         data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+    386         if self._pin_memory:
+    387             data = _utils.pin_memory.pin_memory(data)
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/_utils/fetch.py in fetch(self, possibly_batched_index)
+     42     def fetch(self, possibly_batched_index):
+     43         if self.auto_collation:
+---&gt; 44             data = [self.dataset[idx] for idx in possibly_batched_index]
+     45         else:
+     46             data = self.dataset[possibly_batched_index]
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/_utils/fetch.py in &lt;listcomp&gt;(.0)
+     42     def fetch(self, possibly_batched_index):
+     43         if self.auto_collation:
+---&gt; 44             data = [self.dataset[idx] for idx in possibly_batched_index]
+     45         else:
+     46             data = self.dataset[possibly_batched_index]
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torchvision/datasets/voc.py in __getitem__(self, index)
+    123 
+    124         if self.transforms is not None:
+--&gt; 125             img, target = self.transforms(img, target)
+    126 
+    127         return img, target
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torchvision/datasets/vision.py in __call__(self, input, target)
+     61             input = self.transform(input)
+     62         if self.target_transform is not None:
+---&gt; 63             target = self.target_transform(target)
+     64         return input, target
+     65 
+
+
+&lt;ipython-input-4-e0a946e58f28&gt; in __call__(self, pic)
+     18         img = img.permute((2, 0, 1))
+     19         for i, x in np.ndenumerate(img):
+---&gt; 20             if x == 255:
+     21                 img[i] = 21
+     22         return img.long().view(-1)
+
+
+KeyboardInterrupt: 
+</code></pre></div></div>
+
+<h2 id="samples">Samples</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">torchvision.transforms</span> <span class="kn">import</span> <span class="n">ToPILImage</span>
+
+<span class="n">tpi</span> <span class="o">=</span> <span class="n">ToPILImage</span><span class="p">()</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="n">model</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="s">'cpu'</span><span class="p">)</span>
+<span class="n">model</span><span class="p">.</span><span class="nb">eval</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">image_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">val_loader</span><span class="p">):</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">image_</span><span class="p">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">].</span><span class="n">imshow</span><span class="p">(</span><span class="n">tpi</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
+    <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">].</span><span class="n">imshow</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">image_</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">).</span><span class="n">view</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">image</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span> <span class="p">]]))</span>
+
+<span class="n">fig</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/fullconvnet_files/fullconvnet_15_0.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+:ET

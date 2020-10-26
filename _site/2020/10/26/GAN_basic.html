@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html><html lang="ko">
   <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Welcome - Your Site Title</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>GAN Basic - Mobiis ML Team - Tech blog</title>
 
-<meta name="description" content="If you see this page, that means you have setup your site. enjoy! :ghost: :ghost: :ghost:You may want to config the site or writing a post next. Please feel ...">
-<link rel="canonical" href="http://localhost:4000/2018/07/01/welcome.html"><link rel="alternate" type="application/rss+xml" title="Your Site Title" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<meta name="description" content="GANDefinition  GANs : Generative Adversarial Networks          Generative : 생성의      Adversarial : 대립 관계의, 적대적인        Generator(생성자) 와 Discriminator(감별자) 두 ...">
+<link rel="canonical" href="http://localhost:4000/2020/10/26/GAN_basic.html"><link rel="alternate" type="application/rss+xml" title="Mobiis ML Team - Tech blog" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -254,101 +254,221 @@
 </head>
   <body>
     <div class="root" data-is-touch="false">
-      <div class="layout--page js-page-root">
-<div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
 
-      <div class="page__main-inner">
-<div class="page__header d-print-none">
-<header class="header"><div class="main">
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
       <div class="header__title">
-        <div class="header__brand">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="24px" viewbox="0 0 24 24">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
 <style type="text/css">
 	.st0{fill:#515151;}
 </style>
 <path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
-	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"></path>
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
 </svg>
-<a title="Your Site Description
-" href="/">Your Site Title</a>
-</div>
-<button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button>
-</div>
-<nav class="navigation">
-        <ul>
-<li class="navigation__item"><a href="/archive.html">Archive</a></li>
-<li class="navigation__item"><a href="/about.html">About</a></li>
-<li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li>
-</ul>
-      </nav>
-</div>
+<a title="Mobiis Machine Learning Team - Tech blog
+" href="/">Mobiis ML Team - Tech blog</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/archive.html">아카이브</a></li><li class="navigation__item"><a href="/about.html">소개</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
   </header>
-</div>
-<div class="page__content"><div class="main"><div class="grid grid--reverse">
+</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
 
               <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
 </aside></div>
 
-              <div class="col-main cell cell--auto">
-<!-- start custom main top snippet -->
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
 
 <!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/Article"><div class="article__header">
-<header><h1>Welcome</h1></header><span class="split-space"> </span>
-          <a class="edit-on-github" title="Edit on Github" href="https://github.com/user_name/repo_name/tree/master/_posts/2018-07-01-welcome.md">
-            <i class="far fa-edit"></i></a>
-</div>
-<meta itemprop="headline" content="Welcome">
-<div class="article__info clearfix">
-<ul class="left-col menu"><li>
-              <a class="button button--secondary button--pill button--sm" href="/archive.html?tag=TeXt">TeXt</a>
-            </li></ul>
-<ul class="right-col menu"><li>
-<i class="far fa-calendar-alt"></i> <span>Jul 01, 2018</span>
-            </li></ul>
-</div>
-<meta itemprop="author" content="Your Name">
-<meta itemprop="datePublished" content="2018-07-01T00:00:00+09:00">
-    <meta itemprop="keywords" content="TeXt">
-<div class="js-article-content">
-<div class="layout--article">
-<!-- start custom article top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><div class="article__header"><header><h1>GAN Basic</h1></header><span class="split-space">&nbsp;</span>
+          <a class="edit-on-github"
+            title="Github에서 확인하기"
+            href="https://github.com/mobiismlteam/mobiismlteam.github.io/tree/master/_posts/2020-10-26-GAN_basic.md">
+            <i class="far fa-edit"></i></a></div><meta itemprop="headline" content="GAN Basic"><div class="article__info clearfix"><ul class="left-col menu"><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive.html?tag=GAN">GAN</a>
+            </li></ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2020년 10월 26일</span>
+            </li></ul></div><meta itemprop="author" content="mobiismlteam"/><meta itemprop="datePublished" content="2020-10-26T00:00:00+09:00">
+    <meta itemprop="keywords" content="GAN"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
 
 <!-- end custom article top snippet -->
-<div class="article__content" itemprop="articleBody">
-<p>If you see this page, that means you have setup your site. enjoy! <img class="emoji" title=":ghost:" alt=":ghost:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f47b.png" height="20" width="20"> <img class="emoji" title=":ghost:" alt=":ghost:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f47b.png" height="20" width="20"> <img class="emoji" title=":ghost:" alt=":ghost:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f47b.png" height="20" width="20"></p>
+<div class="article__content" itemprop="articleBody"><h1 id="gan">GAN</h1>
+<h2 id="definition">Definition</h2>
+<ul>
+  <li>GANs : Generative Adversarial Networks
+    <ul>
+      <li>Generative : 생성의</li>
+      <li>Adversarial : 대립 관계의, 적대적인</li>
+    </ul>
+  </li>
+  <li>Generator(생성자) 와 Discriminator(감별자) 두 개의 네트워크로 구성되어 있음
+    <ul>
+      <li><img src="https://3.bp.blogspot.com/-BgYz6OQc4WU/WchaisOCgOI/AAAAAAAACI0/ONloRtdmVisug_HbkotMbP9tr2hkyfg-ACK4BGAYYCw/s1600/kakao_report2.png" alt="" /></li>
+      <li>일반적인 비유 : 지폐 위조범과 경찰
+        <ul>
+          <li>위조범은 더욱 진짜같은 가짜 위조지폐를 만드려고 한다 : Generator</li>
+          <li>경찰은 지폐 감별능력을 높여 위조지폐를 잡아야 한다 : Discriminator</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>최종 : 위조범의 능력이 정점에 달하면, 경찰은 진짜와 위조 지폐를 찍어서 맞추는 수밖에 없다.($D(x)=\frac{1}{2},p=0.5$)
+    <ul>
+      <li>경찰의 능력이 좋아지면, 위조범은 더 정밀한 위폐를 만들어야한다. -&gt; 위조범의 능력이 좋아지면 경찰도 감별능력을 높여야한다. -&gt; 피드백</li>
+      <li>실제로는 이렇게 이상적으로 돌아가지 않는다..
+        <ul>
+          <li>mode-collapse : 위조범이 1000원만 기가막히게 만들었고 경찰이 구분을 못한다. -&gt; 계속 1000원만 만들것이다.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
 
-<p>You may want to <a href="https://tianqi.name/jekyll-TeXt-theme/docs/en/configuration">config the site</a> or <a href="https://tianqi.name/jekyll-TeXt-theme/docs/en/writing-posts">writing a post</a> next. Please feel free to <a href="https://github.com/kitian616/jekyll-TeXt-theme/issues">create an issue</a> or <a href="mailto:kitian616@outlook.com">send me email</a> if you have any questions.</p>
+<h2 id="equations">Equations</h2>
+<ul>
+  <li>$x$ : sample from real data</li>
+  <li>$z \sim p_z$ : latent variable ($p_z$ : generally gaussian)</li>
+  <li>$G(z) \sim p_g$</li>
+  <li>objective
+    <ul>
+      <li>Generator : $p_g=p_{data}$</li>
+      <li>Discriminator : $D(x)=1, D(G(z))=0$
+\(V(D,G) = \mathbb{E}_{x\sim p_{data}(x)}[\log{D(x;\theta_D)}]+
+       \mathbb{E}_{z\sim p_{z}(z)}[\log{(1-D(G(z;\theta_G);\theta_D)}]\)</li>
+      <li>D가 완벽할 때
+        <ul>
+          <li>$x \sim p_{data}(x), D(x)=0 \implies 1st~term=0$</li>
+          <li>$z \sim p_{z}(z), D(G(z))=0 \implies 2nd~term=0$</li>
+          <li>$\therefore V(D,G)=0 \implies \max_{D} V(D,G)$</li>
+          <li>D의 목적은 V 값의 최대화</li>
+        </ul>
+      </li>
+      <li>G가 완벽할 때
+        <ul>
+          <li>1st term 은 z와 관계없으므로 constant</li>
+          <li>$z \sim p_{z}(z), D(G(z))=1 \implies 2nd~term=-\infty$</li>
+          <li>$\therefore V(D,G)=-\infty \implies \min_{G} V(D,G)$</li>
+          <li>G의 목적은 V값의 최소화</li>
+        </ul>
+      </li>
+      <li>re-cap objective : find $G,D$ which satisfy $\min_{G} \max_{D} V(D,G)$</li>
+    </ul>
+  </li>
+  <li>임의의 G에 대한 최적의 D : $D^{*}<em>G(x) = \frac{p</em>{data}(x)}{p_{data}(x) + p_g(x)}$</li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>$\max_D V(D,G) = C(G) = -\log(4) + 2 \cdot JSD(p_{data}</td>
+          <td> </td>
+          <td>p_g)$</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>re-cap objective : $\min_G C(G) : \min_G JSD(p_{data}</td>
+          <td> </td>
+          <td>p_g)$</td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>JSD(Jensen Shannon Divergence) : sum of commuted KL-divergence</li>
+      <li>JSD 측도를 최소화하는 문제와 동일</li>
+      <li>G는 임의 형태의 pdf -&gt; non-parametric 한 G를 만들기 위해 NN을 사용 -&gt; GANs</li>
+    </ul>
+  </li>
+</ul>
 
-<!--more-->
+<h2 id="proscons">Pros/Cons</h2>
+<ul>
+  <li>GAN : sampler
+    <ul>
+      <li>최적화시에 $p_g = p_{data}$ 가 되도록하는 $G(z) \sim p_g$을 만든다.
+        <ul>
+          <li>$z$의 mapping function 을 구하는 것이 목적이므로, $x \sim p_{data}$ 를 직접 구하는 것과는 다르다. : 데이터 분포를 직접 구하는 것이 아니다.</li>
+          <li>따라서, 데이터 분포 자체를 구하기 위해 tracktable likelihood 를 가정하는 다른 모델과 다르게, likelihood-free 하다.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>GAN 학습의 어려움
+    <ul>
+      <li>Convergence
+        <ul>
+          <li>D,G 를 동시에 구한다 -&gt; saddle point 를 고려하지 않으면 학습이 영원이 이루어지지 않을 수 있다.</li>
+        </ul>
+      </li>
+      <li>mode collapse
+        <ul>
+          <li>NN으로 푸는 현실적인 GAN의 경우, 매 단계마다 최적의 $D^{*}$ 를 구할 수 없다. 따라서, value function 을 G와 D에 대해 번갈아가면서 풀어야한다.
+            <ul>
+              <li>$G^{*} = \min_{G} \max_{D} V(G,D)$</li>
+              <li>G,D 에 대해 번갈아가며 풀경우, 위 식은 $G^{*} = \max_{D} \min_{G} V(G,D)$ 와 다르지 않다.
+                <ul>
+                  <li>$\min_{G}$ 를 먼저 푼다. : D가 가장 헷갈려 할만한 샘플 하나만 만들면 땡 -&gt; 쉬운것만 만드는 G가 된다. -&gt; latent variable $z$에 대한 변화가 크지 않은 $G(z)$가 만들어진다.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
 
-<hr>
+<h2 id="training">Training</h2>
+<ul>
+  <li>$\max_{D} V(G,D)$ 를 먼저 푼다.
+    <ul>
+      <li>고정된 G를 두고 다음과 같은 데이터를 D에게 제공한다.
+        <ul>
+          <li>생성기 데이터와 라벨 : (G(z), 0.0)</li>
+          <li>진짜 데이터와 라벨 : (x,1.0)</li>
+          <li>Discriminator 에만 back-prop</li>
+          <li>Loss function : $L_D (\theta_G, \theta_D) = -V(G,D) = - \mathbb{E}<em>{x\sim p</em>{data}(x)}[\log{D(x;\theta_D)}] - \mathbb{E}<em>{z\sim p</em>{z}(z)}[\log{(1-D(G(z;\theta_G);\theta_D)}]$ : binary crossentropy 와 동일함</li>
+          <li>$\theta_D$ 만 업데이트</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>고정된 D를 두고 G를 업데이트 한다
+    <ul>
+      <li>Loss function : $L_G (\theta_G, \theta_D) = - \mathbb{E}<em>{z\sim p</em>{z}(z)}[\log{(1-D(G(z;\theta_G);\theta_D)}]$</li>
+      <li>위 식으로 풀면($G=arg\min_{G}L_G$) G가 처음에 만드는 G(z)는 당연히 이상할 확률이 높으므로, 학습 초기에 값이 잘 변하지 않는다.</li>
+      <li>따라서, 함수를 $L_G (\theta_G, \theta_D) = - \mathbb{E}<em>{z\sim p</em>{z}(z)}[\log{D(G(z;\theta_G);\theta_D)}]$ 로 바꾸어, $G=arg\max_{G}L_G$ 찾는 문제로 변경한다.</li>
+      <li>이후 $\theta_G$ 만 업데이트</li>
+    </ul>
+  </li>
+</ul>
 
-<p>If you like TeXt, don’t forget to give me a star. <img class="emoji" title=":star2:" alt=":star2:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f31f.png" height="20" width="20"></p>
-
-<p><a href="https://github.com/kitian616/jekyll-TeXt-theme/"><img src="https://img.shields.io/github/stars/kitian616/jekyll-TeXt-theme.svg?label=Stars&amp;style=social" alt="Star This Project"></a></p>
-</div>
-<section class="article__sharing d-print-none"></section><div class="d-print-none">
-<footer class="article__footer"><meta itemprop="dateModified" content="2018-07-01T00:00:00+09:00">
-<!-- start custom article footer snippet -->
+<h2 id="example">Example</h2>
+<ul>
+  <li>DCGAN(Deep-convolutional GAN)
+    <ul>
+      <li>Maxpooling, Upsampling 대신 strides&gt;1 convolution 을 사용하여 feature map 크기를 조정하는 방법을 학습하게 함</li>
+      <li>Dense 는 z 받을때만</li>
+      <li>Batch normalization 을 하지만, G 출력과 D 입력에는 사용</li>
+      <li>Generator에서는 출력에 tanh(MNIST는 sigmoid), 나머지는 ReLU</li>
+      <li>Discriminator에서는 전무 Leaky ReLU, alpha=0.2</li>
+    </ul>
+  </li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2020-10-26T00:00:00+09:00"><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
-<div class="article__subscribe">
-<div class="subscribe">
-<i class="fas fa-rss"></i> <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
-</div>
-</div>
-<div class="article__license"><div class="license">
-    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">Attribution-NonCommercial 4.0 International</a> license.
+<div class="article__subscribe"><div class="subscribe"><i class="fas fa-rss"></i> <a type="application/rss+xml" href="/feed.xml">구독하기</a></div>
+</div><div class="article__license"><div class="license">
+    <p>이 글의 저작권은 <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">Attribution-NonCommercial 4.0 International</a> 라이센스를 따릅니다.
       <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">
-        <img alt="Attribution-NonCommercial 4.0 International" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png">
+        <img alt="Attribution-NonCommercial 4.0 International" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" />
       </a>
     </p>
   </div></div></footer>
-<div class="article__section-navigator clearfix"><div class="previous">
-<span>PREVIOUS</span><a href="/2018/06/01/header-image.html">Post with Header Image</a>
-</div></div>
-</div>
+<div class="article__section-navigator clearfix"><div class="next"><span>다음</span><a href="/2020/10/26/alocc.html">ALOCC</a></div></div></div>
 
 </div>
 
@@ -377,36 +497,34 @@
   });
 })();
 </script>
-</div>
-<section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
+</div><section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
-            </div></div></div>
-<div class="page__footer d-print-none">
+            </div></div></div><div class="page__footer d-print-none">
 <footer class="footer py-4 js-page-footer">
-  <div class="main">
-<div itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Your Name">
-<meta itemprop="url" content="/">
-<meta itemprop="description" content="I am an amazing person.">
-<div class="footer__author-links">
-<div class="author-links">
-  <ul class="menu menu--nowrap menu--inline"></ul>
+  <div class="main"><div itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mobiismlteam"><meta itemprop="url" content="/"><meta itemprop="description" content="Mobiis ML Team"><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Github에서 팔로우하기">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mobiismlteam" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
 </div>
 </div>
-    </div>
-<div class="site-info mt-2">
-      <div>© Your Site Title 2020,
-        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> &amp; <a title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+    </div><div class="site-info mt-2">
+      <div>© Mobiis ML Team - Tech blog 2020,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
       </div>
     </div>
   </div>
 </footer>
-</div>
-</div>
-    </div>
-<script>(function() {
+</div></div>
+    </div><script>(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
   window.Lazyload.js(SOURCES.jquery, function() {
     var $body = $('body'), $window = $(window);
@@ -470,8 +588,7 @@
     $.fn.modal = modal;
   });
 })();
-</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal">
-<script>
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
 (function () {
   var SOURCES = window.TEXT_VARIABLES.sources;
   window.Lazyload.js(SOURCES.jquery, function() {
@@ -559,17 +676,17 @@
 })();
 </script><div class="search search--dark">
   <div class="main">
-    <div class="search__header">Search</div>
+    <div class="search__header">검색</div>
     <div class="search-bar">
       <div class="search-box js-search-box">
         <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
-        <input type="text">
+        <input type="text" />
         <div class="search-box__icon-clear js-icon-clear">
           <a><i class="fas fa-times"></i></a>
         </div>
       </div>
       <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
-        Cancel</button>
+        취소</button>
     </div>
     <div class="search-result js-search-result"></div>
   </div>
@@ -687,8 +804,7 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
   });
 });
 </script>
-</div>
-</div>
+</div></div>
 
 
 <script>(function() {
@@ -987,7 +1103,21 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
     window.pageAsideAffix = affix;
   });
 })();
+</script><script type="text/x-mathjax-config">
+	var _config = { tex2jax: {
+		inlineMath: [['$','$'], ['\\(','\\)']]
+	}};MathJax.Hub.Config(_config);
 </script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  window.Lazyload.js('https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js', function() {
+    mermaid.initialize({
+      startOnLoad: true
+    });
+    mermaid.init(undefined, '.language-mermaid');
+  });
+</script>
+
     </div>
     <script>(function () {
   var $root = document.getElementsByClassName('root')[0];

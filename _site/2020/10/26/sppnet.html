@@ -1,0 +1,2719 @@
+<!DOCTYPE html><html lang="ko">
+  <head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Sppnet - Mobiis ML Team - Tech blog</title>
+
+<meta name="description" content="Settings%load_ext autoreload%autoreload 2Mainimport torchfrom torch import nnfrom torch.nn import functional as Ffrom ignite.metrics import Accuracy, Lossbat...">
+<link rel="canonical" href="http://localhost:4000/2020/10/26/sppnet.html"><link rel="alternate" type="application/rss+xml" title="Mobiis ML Team - Tech blog" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://use.fontawesome.com/releases/v5.0.13/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+<a title="Mobiis Machine Learning Team - Tech blog
+" href="/">Mobiis ML Team - Tech blog</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/archive.html">아카이브</a></li><li class="navigation__item"><a href="/about.html">소개</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><div class="article__header"><header><h1>Sppnet</h1></header><span class="split-space">&nbsp;</span>
+          <a class="edit-on-github"
+            title="Github에서 확인하기"
+            href="https://github.com/mobiismlteam/mobiismlteam.github.io/tree/master/_posts/2020-10-26-sppnet.md">
+            <i class="far fa-edit"></i></a></div><meta itemprop="headline" content="Sppnet"><div class="article__info clearfix"><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2020년 10월 26일</span>
+            </li></ul></div><meta itemprop="author" content="mobiismlteam"/><meta itemprop="datePublished" content="2020-10-26T00:00:00+09:00"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h2 id="settings">Settings</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">load_ext</span> <span class="n">autoreload</span>
+<span class="o">%</span><span class="n">autoreload</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<h1 id="main">Main</h1>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">ignite.metrics</span> <span class="kn">import</span> <span class="n">Accuracy</span><span class="p">,</span> <span class="n">Loss</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">10000</span>
+
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">opt_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="n">Adam</span>
+<span class="n">lr</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="n">val_metrics</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'acc'</span><span class="p">:</span> <span class="n">Accuracy</span><span class="p">(),</span>
+        <span class="s">'loss'</span><span class="p">:</span> <span class="n">Loss</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">)</span>
+        <span class="p">}</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s">'cuda:0'</span>
+<span class="n">max_epochs</span> <span class="o">=</span> <span class="mi">1000</span>
+</code></pre></div></div>
+
+<h2 id="load-data">Load Data</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">MNIST</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">transforms</span>
+
+<span class="n">train_data</span> <span class="o">=</span> <span class="n">MNIST</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s">'data/'</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">transforms</span><span class="p">.</span><span class="n">ToTensor</span><span class="p">(),</span> <span class="n">download</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">test_data</span>  <span class="o">=</span> <span class="n">MNIST</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s">'data/'</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">transforms</span><span class="p">.</span><span class="n">ToTensor</span><span class="p">(),</span> <span class="n">download</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">'number of training data: '</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'number of test data: '</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>number of training data:  60000
+number of test data:  10000
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">StratifiedShuffleSplit</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Subset</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">StratifiedShuffleSplit</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">train_idx</span><span class="p">,</span> <span class="n">val_idx</span> <span class="ow">in</span> <span class="n">s</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="n">train_data</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">train_data</span><span class="p">.</span><span class="n">targets</span><span class="p">):</span>
+    <span class="n">train_data</span><span class="p">,</span> <span class="n">val_data</span> <span class="o">=</span> <span class="n">Subset</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_idx</span><span class="p">),</span> <span class="n">Subset</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">val_idx</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="n">val_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">val_data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="n">test_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="construct-model">Construct Model</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SPPLayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    cfg = [(H1, W1), (H2, W2), ...]
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SPPLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">AdaptiveMaxPool2d</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">add_module</span><span class="p">(</span><span class="s">'l{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">l</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">([</span><span class="n">l</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="n">flatten</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+        
+<span class="k">class</span> <span class="nc">SPPNet</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SPPNet</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">spp</span> <span class="o">=</span> <span class="n">SPPLayer</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="nb">sum</span><span class="p">([</span><span class="n">h</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="mi">8</span> <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">]),</span> <span class="mi">10</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">max_pool2d</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">spp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">fc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">SPPNet</span><span class="p">([(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">ignite.engine</span> <span class="kn">import</span> <span class="n">Events</span><span class="p">,</span> <span class="n">create_supervised_trainer</span><span class="p">,</span> <span class="n">create_supervised_evaluator</span>
+
+<span class="k">def</span> <span class="nf">train_net</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">val_metrics</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">val_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">net</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">prepare_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">y</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">output_transform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">y_pred</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">trainer</span> <span class="o">=</span> <span class="n">create_supervised_trainer</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span>
+            <span class="n">prepare_batch</span><span class="o">=</span><span class="n">prepare_batch</span><span class="p">,</span> <span class="n">output_transform</span><span class="o">=</span><span class="n">output_transform</span><span class="p">)</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">create_supervised_evaluator</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">val_metrics</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span>
+            <span class="n">prepare_batch</span><span class="o">=</span><span class="n">prepare_batch</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s">'{}: {:.2f} '</span>
+    <span class="o">@</span><span class="n">trainer</span><span class="p">.</span><span class="n">on</span><span class="p">(</span><span class="n">Events</span><span class="p">.</span><span class="n">EPOCH_COMPLETED</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">log_training_results</span><span class="p">(</span><span class="n">trainer</span><span class="p">):</span>
+        <span class="n">evaluator</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'Epoch {}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">trainer</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">epoch</span><span class="p">))</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">'Train - '</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">val_metrics</span><span class="p">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="n">s</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="o">@</span><span class="n">trainer</span><span class="p">.</span><span class="n">on</span><span class="p">(</span><span class="n">Events</span><span class="p">.</span><span class="n">EPOCH_COMPLETED</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">log_validation_results</span><span class="p">(</span><span class="n">trainer</span><span class="p">):</span>
+        <span class="n">evaluator</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">val_loader</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">'Val   - '</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">val_metrics</span><span class="p">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="n">s</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">trainer</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">opt</span> <span class="o">=</span> <span class="n">opt_</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="p">)</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">train_net</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">val_metrics</span><span class="p">,</span>
+        <span class="n">train_loader</span><span class="p">,</span> <span class="n">val_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">trainer</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">train_loader</span><span class="p">,</span> <span class="n">max_epochs</span><span class="o">=</span><span class="n">max_epochs</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Epoch 1
+Train - acc: 0.26 loss: 2.28 
+Val   - acc: 0.26 loss: 2.28 
+Epoch 2
+Train - acc: 0.22 loss: 2.24 
+Val   - acc: 0.22 loss: 2.24 
+Epoch 3
+Train - acc: 0.32 loss: 2.20 
+Val   - acc: 0.31 loss: 2.20 
+Epoch 4
+Train - acc: 0.55 loss: 2.13 
+Val   - acc: 0.55 loss: 2.13 
+Epoch 5
+Train - acc: 0.65 loss: 2.03 
+Val   - acc: 0.65 loss: 2.04 
+Epoch 6
+Train - acc: 0.67 loss: 1.91 
+Val   - acc: 0.67 loss: 1.91 
+Epoch 7
+Train - acc: 0.70 loss: 1.74 
+Val   - acc: 0.69 loss: 1.75 
+Epoch 8
+Train - acc: 0.71 loss: 1.55 
+Val   - acc: 0.71 loss: 1.55 
+Epoch 9
+Train - acc: 0.73 loss: 1.34 
+Val   - acc: 0.73 loss: 1.35 
+Epoch 10
+Train - acc: 0.75 loss: 1.15 
+Val   - acc: 0.75 loss: 1.15 
+Epoch 11
+Train - acc: 0.77 loss: 0.97 
+Val   - acc: 0.76 loss: 0.98 
+Epoch 12
+Train - acc: 0.79 loss: 0.83 
+Val   - acc: 0.79 loss: 0.83 
+Epoch 13
+Train - acc: 0.81 loss: 0.71 
+Val   - acc: 0.81 loss: 0.72 
+Epoch 14
+Train - acc: 0.83 loss: 0.62 
+Val   - acc: 0.83 loss: 0.63 
+Epoch 15
+Train - acc: 0.85 loss: 0.55 
+Val   - acc: 0.85 loss: 0.56 
+Epoch 16
+Train - acc: 0.87 loss: 0.50 
+Val   - acc: 0.87 loss: 0.51 
+Epoch 17
+Train - acc: 0.88 loss: 0.45 
+Val   - acc: 0.88 loss: 0.46 
+Epoch 18
+Train - acc: 0.89 loss: 0.41 
+Val   - acc: 0.89 loss: 0.43 
+Epoch 19
+Train - acc: 0.90 loss: 0.38 
+Val   - acc: 0.89 loss: 0.40 
+Epoch 20
+Train - acc: 0.90 loss: 0.36 
+Val   - acc: 0.90 loss: 0.37 
+Epoch 21
+Train - acc: 0.91 loss: 0.34 
+Val   - acc: 0.91 loss: 0.35 
+Epoch 22
+Train - acc: 0.91 loss: 0.32 
+Val   - acc: 0.91 loss: 0.33 
+Epoch 23
+Train - acc: 0.92 loss: 0.30 
+Val   - acc: 0.92 loss: 0.31 
+Epoch 24
+Train - acc: 0.92 loss: 0.29 
+Val   - acc: 0.92 loss: 0.30 
+Epoch 25
+Train - acc: 0.92 loss: 0.27 
+Val   - acc: 0.92 loss: 0.29 
+Epoch 26
+Train - acc: 0.93 loss: 0.26 
+Val   - acc: 0.93 loss: 0.27 
+Epoch 27
+Train - acc: 0.93 loss: 0.25 
+Val   - acc: 0.93 loss: 0.26 
+Epoch 28
+Train - acc: 0.93 loss: 0.24 
+Val   - acc: 0.93 loss: 0.25 
+Epoch 29
+Train - acc: 0.93 loss: 0.23 
+Val   - acc: 0.93 loss: 0.24 
+Epoch 30
+Train - acc: 0.94 loss: 0.23 
+Val   - acc: 0.93 loss: 0.24 
+Epoch 31
+Train - acc: 0.94 loss: 0.22 
+Val   - acc: 0.94 loss: 0.23 
+Epoch 32
+Train - acc: 0.94 loss: 0.21 
+Val   - acc: 0.94 loss: 0.22 
+Epoch 33
+Train - acc: 0.94 loss: 0.20 
+Val   - acc: 0.94 loss: 0.21 
+Epoch 34
+Train - acc: 0.94 loss: 0.20 
+Val   - acc: 0.94 loss: 0.21 
+Epoch 35
+Train - acc: 0.94 loss: 0.19 
+Val   - acc: 0.94 loss: 0.20 
+Epoch 36
+Train - acc: 0.95 loss: 0.19 
+Val   - acc: 0.95 loss: 0.19 
+Epoch 37
+Train - acc: 0.95 loss: 0.18 
+Val   - acc: 0.95 loss: 0.19 
+Epoch 38
+Train - acc: 0.95 loss: 0.17 
+Val   - acc: 0.95 loss: 0.18 
+Epoch 39
+Train - acc: 0.95 loss: 0.17 
+Val   - acc: 0.95 loss: 0.18 
+Epoch 40
+Train - acc: 0.95 loss: 0.17 
+Val   - acc: 0.95 loss: 0.18 
+Epoch 41
+Train - acc: 0.95 loss: 0.16 
+Val   - acc: 0.95 loss: 0.17 
+Epoch 42
+Train - acc: 0.95 loss: 0.16 
+Val   - acc: 0.95 loss: 0.17 
+Epoch 43
+Train - acc: 0.95 loss: 0.15 
+Val   - acc: 0.95 loss: 0.16 
+Epoch 44
+Train - acc: 0.96 loss: 0.15 
+Val   - acc: 0.95 loss: 0.16 
+Epoch 45
+Train - acc: 0.96 loss: 0.15 
+Val   - acc: 0.95 loss: 0.16 
+Epoch 46
+Train - acc: 0.96 loss: 0.14 
+Val   - acc: 0.96 loss: 0.15 
+Epoch 47
+Train - acc: 0.96 loss: 0.14 
+Val   - acc: 0.96 loss: 0.15 
+Epoch 48
+Train - acc: 0.96 loss: 0.14 
+Val   - acc: 0.96 loss: 0.15 
+Epoch 49
+Train - acc: 0.96 loss: 0.14 
+Val   - acc: 0.96 loss: 0.15 
+Epoch 50
+Train - acc: 0.96 loss: 0.13 
+Val   - acc: 0.96 loss: 0.14 
+Epoch 51
+Train - acc: 0.96 loss: 0.13 
+Val   - acc: 0.96 loss: 0.14 
+Epoch 52
+Train - acc: 0.96 loss: 0.13 
+Val   - acc: 0.96 loss: 0.14 
+Epoch 53
+Train - acc: 0.96 loss: 0.13 
+Val   - acc: 0.96 loss: 0.14 
+Epoch 54
+Train - acc: 0.96 loss: 0.13 
+Val   - acc: 0.96 loss: 0.13 
+Epoch 55
+Train - acc: 0.96 loss: 0.12 
+Val   - acc: 0.96 loss: 0.13 
+Epoch 56
+Train - acc: 0.96 loss: 0.12 
+Val   - acc: 0.96 loss: 0.13 
+Epoch 57
+Train - acc: 0.96 loss: 0.12 
+Val   - acc: 0.96 loss: 0.13 
+Epoch 58
+Train - acc: 0.96 loss: 0.12 
+Val   - acc: 0.96 loss: 0.13 
+Epoch 59
+Train - acc: 0.96 loss: 0.12 
+Val   - acc: 0.96 loss: 0.13 
+Epoch 60
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 61
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 62
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 63
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 64
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 65
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 66
+Train - acc: 0.97 loss: 0.11 
+Val   - acc: 0.96 loss: 0.12 
+Epoch 67
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.12 
+Epoch 68
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 69
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 70
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 71
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 72
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 73
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 74
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 75
+Train - acc: 0.97 loss: 0.10 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 76
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.11 
+Epoch 77
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 78
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 79
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 80
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 81
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 82
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 83
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 84
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 85
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 86
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 87
+Train - acc: 0.97 loss: 0.09 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 88
+Train - acc: 0.97 loss: 0.08 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 89
+Train - acc: 0.97 loss: 0.08 
+Val   - acc: 0.97 loss: 0.10 
+Epoch 90
+Train - acc: 0.97 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 91
+Train - acc: 0.97 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 92
+Train - acc: 0.97 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 93
+Train - acc: 0.97 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 94
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 95
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 96
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 97
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 98
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 99
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 100
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 101
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 102
+Train - acc: 0.98 loss: 0.08 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 103
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 104
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 105
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 106
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 107
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 108
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.09 
+Epoch 109
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 110
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 111
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 112
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 113
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 114
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 115
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 116
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 117
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.97 loss: 0.08 
+Epoch 118
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 119
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 120
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 121
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 122
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 123
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 124
+Train - acc: 0.98 loss: 0.07 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 125
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 126
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 127
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 128
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 129
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 130
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 131
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 132
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 133
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 134
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 135
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 136
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 137
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 138
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.08 
+Epoch 139
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 140
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 141
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 142
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 143
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 144
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 145
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 146
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 147
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 148
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 149
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 150
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 151
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 152
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 153
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 154
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 155
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 156
+Train - acc: 0.98 loss: 0.06 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 157
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 158
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 159
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 160
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 161
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 162
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 163
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 164
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 165
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 166
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 167
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 168
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 169
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 170
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 171
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 172
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 173
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 174
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 175
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 176
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 177
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 178
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 179
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 180
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 181
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 182
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 183
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 184
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 185
+Train - acc: 0.98 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 186
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 187
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 188
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 189
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 190
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 191
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 192
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 193
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.07 
+Epoch 194
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 195
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 196
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 197
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 198
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 199
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 200
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 201
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 202
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 203
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 204
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 205
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 206
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 207
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 208
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 209
+Train - acc: 0.99 loss: 0.05 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 210
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 211
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 212
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 213
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 214
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 215
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 216
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 217
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 218
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 219
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 220
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 221
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 222
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 223
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 224
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 225
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 226
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 227
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 228
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 229
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 230
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 231
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 232
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 233
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 234
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 235
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 236
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 237
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 238
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 239
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 240
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 241
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 242
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 243
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 244
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 245
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 246
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 247
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 248
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 249
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 250
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 251
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 252
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 253
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 254
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 255
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 256
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 257
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 258
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 259
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 260
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 261
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 262
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 263
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 264
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 265
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 266
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 267
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 268
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 269
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 270
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 271
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 272
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 273
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 274
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 275
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 276
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 277
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 278
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 279
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 280
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 281
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 282
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 283
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 284
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 285
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 286
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 287
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 288
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 289
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 290
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 291
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 292
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 293
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 294
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 295
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 296
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 297
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 298
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 299
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 300
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 301
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 302
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 303
+Train - acc: 0.99 loss: 0.04 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 304
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 305
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 306
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 307
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 308
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 309
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 310
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 311
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 312
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 313
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 314
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 315
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 316
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 317
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 318
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 319
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 320
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 321
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 322
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 323
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 324
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 325
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 326
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 327
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 328
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 329
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.06 
+Epoch 330
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 331
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 332
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 333
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 334
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 335
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 336
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 337
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 338
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 339
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 340
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 341
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 342
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 343
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 344
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 345
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 346
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 347
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 348
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 349
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 350
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 351
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 352
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 353
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 354
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 355
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 356
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 357
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 358
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 359
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 360
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 361
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 362
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 363
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 364
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 365
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 366
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 367
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 368
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 369
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 370
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 371
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 372
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 373
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 374
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 375
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 376
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 377
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 378
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 379
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 380
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.98 loss: 0.05 
+Epoch 381
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 382
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 383
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 384
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 385
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 386
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 387
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 388
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 389
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 390
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 391
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 392
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 393
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 394
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 395
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 396
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 397
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 398
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 399
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 400
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 401
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 402
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 403
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 404
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 405
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 406
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 407
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 408
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 409
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 410
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 411
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 412
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 413
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 414
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 415
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 416
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 417
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 418
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 419
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 420
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 421
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 422
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 423
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 424
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 425
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 426
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 427
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 428
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 429
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 430
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 431
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 432
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 433
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 434
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 435
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 436
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 437
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 438
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 439
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 440
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 441
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 442
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 443
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 444
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 445
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 446
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 447
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 448
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 449
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 450
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 451
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 452
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 453
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 454
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 455
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 456
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 457
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 458
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 459
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 460
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 461
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 462
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 463
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 464
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 465
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 466
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 467
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 468
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 469
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 470
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 471
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 472
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 473
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 474
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 475
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 476
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 477
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 478
+Train - acc: 0.99 loss: 0.03 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 479
+Train - acc: 0.99 loss: 0.02 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 480
+Train - acc: 0.99 loss: 0.02 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 481
+Train - acc: 0.99 loss: 0.02 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 482
+Train - acc: 0.99 loss: 0.02 
+Val   - acc: 0.99 loss: 0.05 
+Epoch 483
+Train - acc: 0.99 loss: 0.02 
+Val   - acc: 0.99 loss: 0.05 
+
+
+Engine run is terminating due to exception: .
+Engine run is terminating due to exception: .
+
+
+
+---------------------------------------------------------------------------
+
+KeyboardInterrupt                         Traceback (most recent call last)
+
+&lt;ipython-input-10-8ac1a0a79e01&gt; in &lt;module&gt;
+      3 trainer = train_net(model, opt, loss_fn, val_metrics,
+      4         train_loader, val_loader, device)
+----&gt; 5 trainer.run(train_loader, max_epochs=max_epochs)
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in run(self, data, max_epochs, epoch_length, seed)
+    656 
+    657         self.state.dataloader = data
+--&gt; 658         return self._internal_run()
+    659 
+    660     @staticmethod
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    720             self._dataloader_iter = None
+    721             self.logger.error("Engine run is terminating due to exception: %s.", str(e))
+--&gt; 722             self._handle_exception(e)
+    723 
+    724         self._dataloader_iter = None
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _handle_exception(self, e)
+    435             self._fire_event(Events.EXCEPTION_RAISED, e)
+    436         else:
+--&gt; 437             raise e
+    438 
+    439     @property
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    708                     self.logger.info(elapsed_time_message)
+    709                     break
+--&gt; 710                 self._fire_event(Events.EPOCH_COMPLETED)
+    711                 self.logger.info(elapsed_time_message)
+    712 
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _fire_event(self, event_name, *event_args, **event_kwargs)
+    391                 kwargs.update(event_kwargs)
+    392                 first, others = ((args[0],), args[1:]) if (args and args[0] == self) else ((), args)
+--&gt; 393                 func(*first, *(event_args + others), **kwargs)
+    394 
+    395     def fire_event(self, event_name: Any) -&gt; None:
+
+
+&lt;ipython-input-9-05b4a011b4ff&gt; in log_training_results(trainer)
+     15     @trainer.on(Events.EPOCH_COMPLETED)
+     16     def log_training_results(trainer):
+---&gt; 17         evaluator.run(train_loader)
+     18         print('Epoch {}'.format(trainer.state.epoch))
+     19         message = 'Train - '
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in run(self, data, max_epochs, epoch_length, seed)
+    656 
+    657         self.state.dataloader = data
+--&gt; 658         return self._internal_run()
+    659 
+    660     @staticmethod
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    720             self._dataloader_iter = None
+    721             self.logger.error("Engine run is terminating due to exception: %s.", str(e))
+--&gt; 722             self._handle_exception(e)
+    723 
+    724         self._dataloader_iter = None
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _handle_exception(self, e)
+    435             self._fire_event(Events.EXCEPTION_RAISED, e)
+    436         else:
+--&gt; 437             raise e
+    438 
+    439     @property
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _internal_run(self)
+    695                     self._setup_engine()
+    696 
+--&gt; 697                 time_taken = self._run_once_on_dataset()
+    698                 self.state.times[Events.EPOCH_COMPLETED.name] = time_taken
+    699                 hours, mins, secs = _to_hours_mins_secs(time_taken)
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/ignite/engine/engine.py in _run_once_on_dataset(self)
+    737                     if self.last_event_name != Events.DATALOADER_STOP_ITERATION:
+    738                         self._fire_event(Events.GET_BATCH_STARTED)
+--&gt; 739                     self.state.batch = next(self._dataloader_iter)
+    740                     self._fire_event(Events.GET_BATCH_COMPLETED)
+    741                     iter_counter += 1
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/dataloader.py in __next__(self)
+    343 
+    344     def __next__(self):
+--&gt; 345         data = self._next_data()
+    346         self._num_yielded += 1
+    347         if self._dataset_kind == _DatasetKind.Iterable and \
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/dataloader.py in _next_data(self)
+    383     def _next_data(self):
+    384         index = self._next_index()  # may raise StopIteration
+--&gt; 385         data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+    386         if self._pin_memory:
+    387             data = _utils.pin_memory.pin_memory(data)
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/_utils/fetch.py in fetch(self, possibly_batched_index)
+     42     def fetch(self, possibly_batched_index):
+     43         if self.auto_collation:
+---&gt; 44             data = [self.dataset[idx] for idx in possibly_batched_index]
+     45         else:
+     46             data = self.dataset[possibly_batched_index]
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/_utils/fetch.py in &lt;listcomp&gt;(.0)
+     42     def fetch(self, possibly_batched_index):
+     43         if self.auto_collation:
+---&gt; 44             data = [self.dataset[idx] for idx in possibly_batched_index]
+     45         else:
+     46             data = self.dataset[possibly_batched_index]
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torch/utils/data/dataset.py in __getitem__(self, idx)
+    255 
+    256     def __getitem__(self, idx):
+--&gt; 257         return self.dataset[self.indices[idx]]
+    258 
+    259     def __len__(self):
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torchvision/datasets/mnist.py in __getitem__(self, index)
+     95 
+     96         if self.transform is not None:
+---&gt; 97             img = self.transform(img)
+     98 
+     99         if self.target_transform is not None:
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torchvision/transforms/transforms.py in __call__(self, pic)
+     99             Tensor: Converted image.
+    100         """
+--&gt; 101         return F.to_tensor(pic)
+    102 
+    103     def __repr__(self):
+
+
+~/.virtualenvs/BaeJR_py36/lib/python3.6/site-packages/torchvision/transforms/functional.py in to_tensor(pic)
+     98     img = img.transpose(0, 1).transpose(0, 2).contiguous()
+     99     if isinstance(img, torch.ByteTensor):
+--&gt; 100         return img.float().div(255)
+    101     else:
+    102         return img
+
+
+KeyboardInterrupt: 
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2020-10-26T00:00:00+09:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe"><i class="fas fa-rss"></i> <a type="application/rss+xml" href="/feed.xml">구독하기</a></div>
+</div><div class="article__license"><div class="license">
+    <p>이 글의 저작권은 <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">Attribution-NonCommercial 4.0 International</a> 라이센스를 따릅니다.
+      <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">
+        <img alt="Attribution-NonCommercial 4.0 International" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>이전</span><a href="/2020/10/26/fullconvnet.html">Fullconvnet</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mobiismlteam"><meta itemprop="url" content="/"><meta itemprop="description" content="Mobiis ML Team"><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Github에서 팔로우하기">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mobiismlteam" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mobiis ML Team - Tech blog 2020,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">검색</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        취소</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script><script type="text/x-mathjax-config">
+	var _config = { tex2jax: {
+		inlineMath: [['$','$'], ['\\(','\\)']]
+	}};MathJax.Hub.Config(_config);
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  window.Lazyload.js('https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js', function() {
+    mermaid.initialize({
+      startOnLoad: true
+    });
+    mermaid.init(undefined, '.language-mermaid');
+  });
+</script>
+
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+

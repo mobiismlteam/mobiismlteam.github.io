@@ -1,1 +1,1 @@
-window.TEXT_SEARCH_DATA={'posts':[{'title':"Post with Header Image",'url':"/2018/06/01/header-image.html"},{'title':"Welcome",'url':"/2018/07/01/welcome.html"}]};
+window.TEXT_SEARCH_DATA={'posts':[{'title':"GAN Basic",'url':"/2020/10/26/GAN_basic.html"},{'title':"ALOCC",'url':"/2020/10/26/alocc.html"},{'title':"Fullconvnet",'url':"/2020/10/26/fullconvnet.html"},{'title':"Sppnet",'url':"/2020/10/26/sppnet.html"}]};
