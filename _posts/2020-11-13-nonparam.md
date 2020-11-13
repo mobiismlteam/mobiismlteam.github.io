@@ -10,10 +10,8 @@ tags : UnsupervisedFeatureLearning
 
 <h1>Zhirong Wu et al. Unsupervised Feature Learning via Non-Parametric Instance Discrimination (2018)$^{(1)}$ - Implementation</h1>
 <br />
-<br />
 
 <h3>Motivation</h3>
-<br />
 <img src="/assets/images/nonparam_files/np_motivation.png" width="600">
 <br />
 <h5>Observation of a classification model</h5>
@@ -36,8 +34,6 @@ Can we learn to discriminate the individual instances, without any notion of sem
 <br />
 
 <h3>The Result of the Application, and Our Objective</h3>
-
-<br />
 <img src="/assets/images/nonparam_files/np_interest.png" width="1000">
 <br />
 
@@ -49,13 +45,14 @@ We observe that even in the failure cases, there are some features that are simi
 <br />
 
 <h3>The Pipeline</h3>
-<br />
 <img src="/assets/images/nonparam_files/np_implementation_pipeline.png" width="1000">
 <br />
 <br />
 Above is the training network. <br />
 
-In testing, we calculate the similarity between the query and each element in the memory bank and output top "k" candidates. <br />
+In testing, we calculate the similarity between the query and each element in the memory bank and output top "k" candidates. 
+<br />
+<br />
 
 <h3>Result of Our Training (sample)</h3>
 <img src="/assets/images/nonparam_files/np_res_norecompute.png" >
@@ -600,8 +597,7 @@ for epoch in range(total_epochs):
 ```
 
 <h5>Learning curve</h5>
-<img src="/assets/images/nonparam_files/np_res_norecompute.png" >
-<br />
+<img src="/assets/images/nonparam_files/np_learningcurve.png" >
 <br />
 <br />
 
