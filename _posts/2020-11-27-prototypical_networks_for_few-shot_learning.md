@@ -1,5 +1,6 @@
 ---
 layout: article
+title: prototypical networks for few-shot learning
 mathjax: true
 toc : true
 tags : FewShotLearning
